@@ -5,6 +5,8 @@ const projectService = {
   getAll: () => api.get('/projects/'),
   // 获取单个项目
   getOne: (projectId) => api.get(`/projects/${projectId}`),
+  // 获取项目的派遣列表
+  getAssignments: (projectId) => api.get(`/projects/${projectId}/assignments`),
   // 为项目指派员工（拖拽或勾选后选择时间段）
   assignEmployee: (projectId, employeeId, start, end) =>
     api.post(`/projects/${projectId}/assignments`, {
