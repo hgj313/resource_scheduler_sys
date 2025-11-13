@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
@@ -27,6 +27,31 @@ const ProjectView = () => {
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
+  const [projectName, setProjectName] = useState('');
+
+  // 恢复并持久化副时间轴刻度（确保在组件内部调用hooks）
+  useEffect(() => {
+    try {
+      const s = window.localStorage.getItem('timeline.sub.scale');
+      if (s) setSubScale(s);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { window.localStorage.setItem('timeline.sub.scale', subScale); } catch {}
+  }, [subScale]);
+
+  // 加载项目名称并在标题显示
+  useEffect(() => {
+    const fetchProjectName = async () => {
+      try {
+        const resp = await projectService.getOne(projectId);
+        setProjectName(resp.data?.name || String(projectId));
+      } catch {
+        setProjectName(String(projectId));
+      }
+    };
+    fetchProjectName();
+  }, [projectId]);
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (
@@ -43,7 +68,7 @@ const ProjectView = () => {
     <div className="project-layout">
       <div className="project-topbar">
         <button className="btn" onClick={() => navigate(-1)}>返回区域界面</button>
-        <h2 className="project-title">项目：{projectId}</h2>
+        <h2 className="project-title">{projectName || projectId}</h2>
       </div>
 
       <div className="card">
@@ -66,7 +91,7 @@ const ProjectView = () => {
 
       <div className="card project-info">
         <div>项目信息卡片（占位）</div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>添加项目人员</button>
+        <button className="btn btn-primary btn-add-person" onClick={() => setShowModal(true)}>添加项目人员</button>
       </div>
 
       <div className="card">
@@ -98,7 +123,7 @@ const ProjectView = () => {
           <div style={{ textAlign: 'right', marginTop: 12 }}>
             <button className="btn" onClick={() => setTimeModalOpen(false)}>取消</button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-time"
               style={{ marginLeft: 8 }}
               onClick={async () => {
                 if (!assignStart || !assignEnd) return;

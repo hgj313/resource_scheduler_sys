@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../styles/components/timeline.css';
 
 const SCALE_OPTIONS_MAIN = [
@@ -18,6 +18,7 @@ const Timeline = ({ type = 'main', scale = 'month', onScaleChange, onSetTime }) 
   const options = type === 'main' ? SCALE_OPTIONS_MAIN : SCALE_OPTIONS_SUB;
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const restored = useRef(false);
 
   const canSubmit = Boolean(start && end);
 
@@ -25,7 +26,28 @@ const Timeline = ({ type = 'main', scale = 'month', onScaleChange, onSetTime }) 
     if (!canSubmit) return;
     // 将时间原样传递，后端FastAPI支持ISO格式解析
     onSetTime && onSetTime(start, end);
+    try {
+      const key = `timeline.${type}.range`;
+      window.localStorage.setItem(key, JSON.stringify({ start, end }));
+    } catch {}
   };
+
+  // 恢复之前设置的时间范围，并自动调用一次 onSetTime
+  useEffect(() => {
+    try {
+      const key = `timeline.${type}.range`;
+      const raw = window.localStorage.getItem(key);
+      if (raw && !restored.current) {
+        const obj = JSON.parse(raw);
+        if (obj?.start && obj?.end) {
+          setStart(obj.start);
+          setEnd(obj.end);
+          restored.current = true;
+          onSetTime && onSetTime(obj.start, obj.end);
+        }
+      }
+    } catch {}
+  }, [type]);
 
   return (
     <div className={`timeline timeline--${type}`}>
@@ -47,7 +69,7 @@ const Timeline = ({ type = 'main', scale = 'month', onScaleChange, onSetTime }) 
           value={end}
           onChange={(e) => setEnd(e.target.value)}
         />
-        <button className="btn btn-primary" disabled={!canSubmit} onClick={handleSubmit}>
+        <button className="btn btn-primary btn-time" disabled={!canSubmit} onClick={handleSubmit}>
           设置时间
         </button>
       </div>

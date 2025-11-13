@@ -35,6 +35,24 @@ const RegionView = () => {
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
 
+  // 读取并持久化时间轴刻度（必须在组件内部调用hooks）
+  useEffect(() => {
+    try {
+      const m = window.localStorage.getItem('timeline.main.scale');
+      const s = window.localStorage.getItem('timeline.sub.scale');
+      if (m) setMainScale(m);
+      if (s) setSubScale(s);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('timeline.main.scale', mainScale); } catch {}
+  }, [mainScale]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem('timeline.sub.scale', subScale); } catch {}
+  }, [subScale]);
+
   // 当区域过滤变化且副时间轴已设置时，联动刷新员工
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -53,7 +71,7 @@ const RegionView = () => {
   return (
     <div className="region-layout">
       <div className="region-topbar">
-        <button className="btn" onClick={() => navigate('/')}>返回主页面</button>
+        <button className="btn" onClick={() => navigate('/main')}>返回主页面</button>
         <h2 className="region-title">{REGION_NAMES[regionId] || '区域'}</h2>
       </div>
 
@@ -155,7 +173,7 @@ const RegionView = () => {
           <div style={{ textAlign: 'right', marginTop: 12 }}>
             <button className="btn" onClick={() => setAssignModalOpen(false)}>取消</button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-time"
               onClick={async () => {
                 if (!assignTarget.projectId || !assignTarget.employee || !assignStart || !assignEnd) return;
                 try {

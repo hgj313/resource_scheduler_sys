@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegionCard from '../components/RegionCard';
 import '../styles/main.css';
+import { getCurrentUser, isAuthenticated, logout } from '../services/authService';
 
 const REGIONS = [
   { id: 'sw', name: '西南区域' },
@@ -13,14 +14,38 @@ const REGIONS = [
 const MainPage = () => {
   const navigate = useNavigate();
   const [hoveredId, setHoveredId] = useState(null);
+  const authed = isAuthenticated();
+  const user = getCurrentUser();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleSwitchAccount = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="main-layout">
       <div className="main-left card">
         <h2>仪表盘</h2>
         <div className="user-info">
-          <div>当前用户：张三</div>
-          <div>角色：调度管理员</div>
+          <div>登录状态：{authed ? '已登录' : '未登录'}</div>
+          {authed ? (
+            <>
+              <div>当前用户：{user?.username || '-'}</div>
+              <div className="actions" style={{ marginTop: 8 }}>
+                <button className="btn" onClick={handleLogout}>退出登录</button>
+                <button className="btn" onClick={handleSwitchAccount} style={{ marginLeft: 8 }}>切换账户</button>
+              </div>
+            </>
+          ) : (
+            <div className="actions" style={{ marginTop: 8 }}>
+              <button className="btn btn-primary" onClick={() => navigate('/login')}>去登录</button>
+            </div>
+          )}
         </div>
       </div>
       <div className="main-right">

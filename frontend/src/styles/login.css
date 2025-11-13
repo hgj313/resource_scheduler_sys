@@ -1,0 +1,104 @@
+/* 登录页现代化样式 */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e8f5e9 50%, #fff 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.login-header {
+  padding: 24px 24px 8px;
+}
+.login-title {
+  margin: 0;
+  font-size: 22px;
+  color: #222;
+}
+.login-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.login-body {
+  padding: 16px 24px 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.form-label {
+  font-size: 13px;
+  color: #333;
+}
+.form-input {
+  padding: 12px 14px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: #fafbfc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.form-input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+  background: #fff;
+}
+
+.login-actions {
+  margin-top: 8px;
+}
+.login-page .btn-primary {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  background: #28a745;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.06s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.login-page .btn-primary:hover {
+  background: #23923c;
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.25);
+}
+.login-page .btn-primary:active {
+  transform: translateY(1px);
+}
+
+.login-footer {
+  padding: 12px 24px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.error-box {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff4f4;
+  border: 1px solid #ffd5d5;
+  color: #c62828;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .login-card { border-radius: 12px; }
+  .login-title { font-size: 20px; }
+}

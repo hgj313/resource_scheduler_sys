@@ -54,6 +54,19 @@ code {
   background-color: #c82333;
 }
 
+/* 分类按钮尺寸：时间设置 & 添加人员 */
+.btn-time {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.btn-add-person {
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
 .form-group {
   margin-bottom: 15px;
 }

@@ -6,6 +6,7 @@ from app.api.v1.endpoints.employees import router as employees_router
 from app.api.v1.endpoints.projects import router as projects_router
 from app.api.v1.endpoints.regions import router as regions_router
 from app.api.v1.endpoints.filters import router as filters_router
+from app.api.v1.endpoints.auth import router as auth_router
 from app.core.config import settings
 
 
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(projects_router, prefix="/api/v1")
     app.include_router(regions_router, prefix="/api/v1")
     app.include_router(filters_router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1")
 
     @app.get("/healthz", tags=["health"])
     def health_check():

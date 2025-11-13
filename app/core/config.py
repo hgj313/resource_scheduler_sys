@@ -15,6 +15,7 @@ class Settings(BaseModel):
     """
 
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///c:/A-吉盛/技术部协作/DP/hrc/hrc.db")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
     # SQLAlchemy 连接额外参数
     # sqlite3 连接选项由DAL管理

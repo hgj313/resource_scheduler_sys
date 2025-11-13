@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 from app.core.config import settings
+from app.core.security import hash_password
 
 
 def _sqlite_path_from_url(url: str) -> str:
@@ -126,6 +127,33 @@ def init_db():
         );
         """
     )
+
+    # 用户表（用于登录）
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_salt TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT
+        );
+        """
+    )
+
+    # 初始化默认管理员账户（仅在空表时）
+    cur.execute("SELECT COUNT(*) AS cnt FROM users")
+    row = cur.fetchone()
+    try:
+        if (row[0] if isinstance(row, tuple) else row["cnt"]) == 0:
+            salt, pwd_hash = hash_password("admin123")
+            cur.execute(
+                "INSERT INTO users (username, password_salt, password_hash, role) VALUES (?, ?, ?, ?)",
+                ("admin", salt, pwd_hash, "admin"),
+            )
+    except Exception:
+        # 若初始化失败，继续执行，不阻断应用启动
+        pass
 
     conn.commit()
     conn.close()
