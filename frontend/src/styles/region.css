@@ -1,0 +1,7 @@
+/* 区域页面样式 */
+.region-layout { padding: 4px; }
+.region-topbar { display: flex; align-items: center; gap: 12px; }
+.region-title { flex: 1; text-align: center; font-weight: 600; }
+
+.employee-pool-header { display: flex; justify-content: space-between; align-items: center; }
+.employee-pool-controls { display: flex; align-items: center; gap: 8px; }

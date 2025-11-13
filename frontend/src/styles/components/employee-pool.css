@@ -1,0 +1,3 @@
+/* 员工池样式 */
+.employee-pool { overflow: hidden; }
+.employee-pool__row { display: flex; overflow-x: auto; padding-bottom: 8px; }

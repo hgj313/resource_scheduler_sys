@@ -1,0 +1,23 @@
+/* 主页面水墨风与布局 */
+.main-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+}
+
+.main-left {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(1px);
+}
+
+.main-right {
+  padding: 8px;
+}
+
+.region-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.user-info { color: #333; }

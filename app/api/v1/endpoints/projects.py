@@ -152,6 +152,31 @@ def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.C
     r["end_time"] = datetime.fromisoformat(r["end_time"]) if r.get("end_time") else None
     return AssignmentRead(**r)
 
+@router.get("/{project_id}/assignments",response_model = list[AssignmentRead])
+async def read_assignments(project_id:int,db:sqlite3.Connection=Depends(get_db)):
+    cur = db.cursor()
+    cur.execute("""
+    SELECT e.name as employee_name,ea.*
+    FROM employees e
+    LEFT JOIN employee_assignments ea ON e.id = ea.employee_id 
+    WHERE ea.project_id = ?
+    """, (project_id,))
+    rows = cur.fetchall()
+    Assignments_list = []
+    for r in rows:
+        assignmentread = AssignmentRead(
+            id=r["id"],
+            employee_name=r["employee_name"],
+            employee_id=r["employee_id"],
+            project_id=r["project_id"],
+            start_time=datetime.fromisoformat(r["start_time"]),
+            end_time=datetime.fromisoformat(r["end_time"]),
+        )
+
+        Assignments_list.append(assignmentread)
+    return Assignments_list
+
+
 
 @router.get("/{project_id}/members", response_model=list[dict])
 def list_members(project_id: int, db: sqlite3.Connection = Depends(get_db)):

@@ -1,0 +1,5 @@
+/* 项目页面样式 */
+.project-layout { padding: 4px; }
+.project-topbar { display: flex; align-items: center; gap: 12px; }
+.project-title { flex: 1; text-align: center; font-weight: 600; }
+.project-info { display: flex; justify-content: space-between; align-items: center; }

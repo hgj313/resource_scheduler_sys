@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.db.session import init_db
 from app.api.v1.endpoints.employees import router as employees_router
@@ -27,6 +28,22 @@ def create_app() -> FastAPI:
     - 注册路由
     """
     app = FastAPI(title="HRC 人力资源调度系统后端", version="0.1.0", lifespan=lifespan)
+
+    # 启用 CORS，允许前端开发环境通过预检（OPTIONS）访问后端
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        # 前端当前运行在 3001 端口，需要允许该来源
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # 注册路由到 /api/v1
     app.include_router(employees_router, prefix="/api/v1")

@@ -1,0 +1,7 @@
+/* 员工卡片样式 */
+.employee-card { min-width: 160px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); padding: 10px; margin-right: 8px; }
+.employee-card__header { display: flex; justify-content: space-between; }
+.employee-card__name { font-weight: 600; }
+.employee-card__role { color: #666; font-size: 12px; }
+.employee-card__footer { margin-top: 8px; }
+.employee-card__checkbox { color: #333; }

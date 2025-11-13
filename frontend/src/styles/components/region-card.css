@@ -1,0 +1,13 @@
+/* 区域卡片，水墨风，黄金分割缩放 */
+.region-card {
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,245,245,0.96));
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  padding: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center;
+}
+.region-card--normal { transform: scale(0.618); }
+.region-card--hovered { transform: scale(1.618); box-shadow: 0 6px 12px rgba(0,0,0,0.12); }
+.region-card__name { font-weight: 600; color: #333; text-align: center; }

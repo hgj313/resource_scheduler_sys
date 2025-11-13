@@ -1,25 +1,34 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 import sqlite3
+from typing import Annotated
+from fastapi import Depends
 from app.db.session import get_db
 from app.schemas import ProjectRead
 from app.schemas.employee import EmployeeAssign,EmployeeRead
 from app.services.timeline import NewTimeDelta, employee_available_in_secondary, project_in_main_timeline
 from app.state.timelines import timeline_state
+from app.services.datatransform import transform_date
 
 
 router = APIRouter(tags=["filters"], prefix="/filters")
 
 
 @router.put("/main-timeline")
-def set_main_timeline(start: datetime, end: datetime):
+def set_main_timeline(
+    start: Annotated[datetime ,Query()],
+    end: Annotated[datetime ,Query()]
+    ):
     """设置主时间轴。"""
     timeline_state.set_main(start, end)
     return {"ok": True}
 
 
 @router.put("/secondary-timeline")
-def set_secondary_timeline(start: datetime, end: datetime):
+def set_secondary_timeline(
+    start: datetime = Query(), 
+    end: datetime = Query()
+    ):
     """设置副时间轴。"""
     timeline_state.set_secondary(start, end)
     return {"ok": True}

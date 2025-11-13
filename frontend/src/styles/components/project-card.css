@@ -1,0 +1,4 @@
+/* 项目卡片样式 */
+.project-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); padding: 10px; cursor: pointer; }
+.project-card__name { font-weight: 600; }
+.project-card__dates { font-size: 12px; color: #666; }
