@@ -1,0 +1,39 @@
+from pydantic import BaseModel
+from app.services.timeline import NewTimeDelta
+
+
+
+class EmployeeBase(BaseModel):
+    name: str
+    gender: str | None = None
+    email: str 
+    phone: str | None = None
+    position: str | None = None
+    department: str | None = None
+    region: str | None = None
+
+
+class EmployeeUpdate(BaseModel):
+    name: str | None = None
+    gender: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    position: str | None = None
+    department: str | None = None
+    region: str | None = None
+
+class EmployeeCreate(EmployeeBase):
+    pass
+
+
+class EmployeeRead(EmployeeBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class EmployeeAssign(EmployeeRead):
+    assign_timeline:list[NewTimeDelta]|None=None
+
+    class Config:
+        from_attributes = True
