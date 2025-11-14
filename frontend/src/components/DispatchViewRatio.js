@@ -6,7 +6,6 @@ function assignLanesByRatio(items) {
   const lanes = [];
   sorted.forEach((it) => {
     const start = it.start_point_ratio;
-    const end = start + it.ratio;
     let placed = false;
     for (const lane of lanes) {
       const last = lane[lane.length - 1];

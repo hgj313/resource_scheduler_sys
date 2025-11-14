@@ -28,6 +28,16 @@ const ScrollableLayout = ({ start, end, scale, zoom = 1, onZoomChange, height = 
     if (e.ctrlKey) {
       e.preventDefault();
       el.scrollLeft += e.deltaY;
+      return;
+    }
+    if (e.shiftKey) {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const currentZoom = unitLengthPx / baseWidth;
+      const nextZoom = Math.max(0.5, Math.min(5, currentZoom * (1 + delta / 600)));
+      onZoomChange && onZoomChange(nextZoom);
+      setUnitLengthPx(Math.round(baseWidth * nextZoom));
+      try { window.localStorage.setItem('layout.zoom', String(nextZoom)); } catch {}
     }
   };
 

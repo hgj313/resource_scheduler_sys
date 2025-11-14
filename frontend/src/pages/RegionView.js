@@ -169,30 +169,41 @@ const RegionView = () => {
       </div>
 
       <div className="card">
-        <ProjectPool
-          projects={projects}
-          onOpenProject={(pid) => navigate(`/project/${pid}`)}
+        <ScrollableLayout
+          start={mainStartISO ? new Date(mainStartISO) : new Date()}
+          end={mainEndISO ? new Date(mainEndISO) : new Date()}
           scale={mainScale}
-          onDropAssign={(pid, emp) => {
-            setAssignTarget({ projectId: pid, employee: emp });
-            setAssignStart('');
-            setAssignEnd('');
-            setAssignModalOpen(true);
-          }}
-        />
+          zoom={zoom}
+          onZoomChange={setZoom}
+          height={260}
+        >
+          {({ unitLengthPx }) => (
+            <RegionLayoutView
+              entries={regionLayoutEntries}
+              unitLengthPx={unitLengthPx}
+              projectsById={Object.fromEntries(projects.map((p) => [p.id, p]))}
+              onOpenProject={(pid) => navigate(`/project/${pid}`)}
+              onDropAssign={(pid, emp) => {
+                setAssignTarget({ projectId: pid, employee: emp });
+                setAssignStart('');
+                setAssignEnd('');
+                setAssignModalOpen(true);
+              }}
+            />
+          )}
+        </ScrollableLayout>
         <div style={{ marginTop: 12 }}>
-          <ScrollableLayout
-            start={mainStartISO ? new Date(mainStartISO) : new Date()}
-            end={mainEndISO ? new Date(mainEndISO) : new Date()}
+          <ProjectPool
+            projects={projects}
+            onOpenProject={(pid) => navigate(`/project/${pid}`)}
             scale={mainScale}
-            zoom={zoom}
-            onZoomChange={setZoom}
-            height={240}
-          >
-            {({ unitLengthPx }) => (
-              <RegionLayoutView entries={regionLayoutEntries} unitLengthPx={unitLengthPx} />
-            )}
-          </ScrollableLayout>
+            onDropAssign={(pid, emp) => {
+              setAssignTarget({ projectId: pid, employee: emp });
+              setAssignStart('');
+              setAssignEnd('');
+              setAssignModalOpen(true);
+            }}
+          />
         </div>
       </div>
 
