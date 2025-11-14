@@ -28,12 +28,6 @@ const ProjectView = () => {
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
   const [projectName, setProjectName] = useState('');
-  const [projectInfo, setProjectInfo] = useState(null);
-
-  const toDateStr = (iso) => {
-    if (!iso) return '-';
-    try { return new Date(iso).toISOString().slice(0, 10); } catch { return '-'; }
-  };
 
   // 恢复并持久化副时间轴刻度（确保在组件内部调用hooks）
   useEffect(() => {
@@ -52,55 +46,11 @@ const ProjectView = () => {
       try {
         const resp = await projectService.getOne(projectId);
         setProjectName(resp.data?.name || String(projectId));
-        setProjectInfo(resp.data || null);
       } catch {
         setProjectName(String(projectId));
-        setProjectInfo(null);
       }
     };
     fetchProjectName();
-  }, [projectId]);
-
-  // 拉取并映射项目派遣列表到可视化
-  useEffect(() => {
-    let mounted = true;
-    const fetchAssignments = async () => {
-      try {
-        const resp = await projectService.getAssignments(Number(projectId));
-        const list = (resp.data || []).map((r) => ({
-          id: r.id,
-          name: r.employee_name || `员工 ${r.employee_id}`,
-          start: toDateStr(r.start_time),
-          end: toDateStr(r.end_time),
-        }));
-        if (mounted) setAssignments(list);
-      } catch (err) {
-        console.error('拉取项目派遣列表失败', err);
-        if (mounted) setAssignments([]);
-      }
-    };
-    fetchAssignments();
-    return () => { mounted = false; };
-  }, [projectId]);
-
-  // 轮询检测派遣变更并自动更新（每10秒）
-  useEffect(() => {
-    const intv = setInterval(async () => {
-      try {
-        const resp = await projectService.getAssignments(Number(projectId));
-        const list = (resp.data || []).map((r) => ({
-          id: r.id,
-          name: r.employee_name || `员工 ${r.employee_id}`,
-          start: toDateStr(r.start_time),
-          end: toDateStr(r.end_time),
-        }));
-        setAssignments(list);
-      } catch (err) {
-        // 轮询失败时不打断页面，仅记录错误
-        console.debug('轮询派遣列表失败', err);
-      }
-    }, 10000);
-    return () => clearInterval(intv);
   }, [projectId]);
 
   const toggleSelect = (id) => {
@@ -122,47 +72,30 @@ const ProjectView = () => {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-          <div style={{ flex: 1 }}>
-            <Timeline
-              type="sub"
-              scale={subScale}
-              onScaleChange={setSubScale}
-              onSetTime={async (start, end) => {
-                try {
-                  await filterService.setSecondaryTimeline(start, end);
-                  const resp = await filterService.filterEmployees();
-                  const list = (resp.data || []).map((e) => ({ id: e.id, name: e.name, role: e.position || '', region: e.region }));
-                  setEmployees(list);
-                } catch (err) {
-                  console.error('设置副时间轴失败', err);
-                }
-              }}
-            />
-          </div>
-          <button className="btn btn-primary btn-add-person" onClick={() => setShowModal(true)}>添加项目人员</button>
-        </div>
+        <Timeline
+          type="sub"
+          scale={subScale}
+          onScaleChange={setSubScale}
+          onSetTime={async (start, end) => {
+            try {
+              await filterService.setSecondaryTimeline(start, end);
+              const resp = await filterService.filterEmployees();
+              const list = (resp.data || []).map((e) => ({ id: e.id, name: e.name, role: e.position || '', region: e.region }));
+              setEmployees(list);
+            } catch (err) {
+              console.error('设置副时间轴失败', err);
+            }
+          }}
+        />
       </div>
 
       <div className="card project-info">
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>项目信息</div>
-        <div style={{ color: '#333', marginBottom: 8 }}>项目名称：{projectInfo?.name || projectName || '-'}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          <div>开始时间：{toDateStr(projectInfo?.start_time)}</div>
-          <div>结束时间：{toDateStr(projectInfo?.end_time)}</div>
-          <div>员工分配数量：{assignments?.length || 0}</div>
-          <div>价值：{projectInfo?.value ?? '-'}</div>
-          <div>区域：{projectInfo?.region ?? '-'}</div>
-          <div>项目ID：{projectId}</div>
-        </div>
+        <div>项目信息卡片（占位）</div>
+        <button className="btn btn-primary btn-add-person" onClick={() => setShowModal(true)}>添加项目人员</button>
       </div>
 
       <div className="card">
-        {assignments && assignments.length > 0 ? (
-          <DispatchView assignments={assignments} />
-        ) : (
-          <div style={{ padding: 8, color: '#666' }}>暂无派遣数据</div>
-        )}
+        <DispatchView assignments={assignments} />
       </div>
 
       {showModal && (
@@ -199,18 +132,9 @@ const ProjectView = () => {
                   const e = new Date(assignEnd).toISOString();
                   for (const empId of selectedIds) {
                     await projectService.assignEmployee(Number(projectId), empId, s, e);
+                    const name = employees.find((x) => x.id === empId)?.name || String(empId);
+                    setAssignments((prev) => ([...prev, { id: Date.now() + Math.random(), name, start: s.slice(0, 10), end: e.slice(0, 10) }]));
                   }
-                  // 派遣成功后刷新后端真实派遣列表，自动重排
-                  try {
-                    const resp = await projectService.getAssignments(Number(projectId));
-                    const list = (resp.data || []).map((r) => ({
-                      id: r.id,
-                      name: r.employee_name || `员工 ${r.employee_id}`,
-                      start: toDateStr(r.start_time),
-                      end: toDateStr(r.end_time),
-                    }));
-                    setAssignments(list);
-                  } catch {}
                   setTimeModalOpen(false);
                   setShowModal(false);
                   setSelectedIds([]);
