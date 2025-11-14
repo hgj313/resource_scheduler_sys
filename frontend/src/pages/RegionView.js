@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
+import layoutService from '../services/layoutService';
+import RegionLayoutView from '../components/RegionLayoutView';
 import EmployeePool from '../components/EmployeePool';
 import ProjectPool from '../components/ProjectPool';
 import '../styles/region.css';
@@ -29,6 +31,7 @@ const RegionView = () => {
   const [filterRegion, setFilterRegion] = useState(regionId);
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [regionLayoutEntries, setRegionLayoutEntries] = useState([]);
   const [secondaryReady, setSecondaryReady] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState({ projectId: null, employee: null });
@@ -86,6 +89,19 @@ const RegionView = () => {
               const resp = await filterService.filterProjects();
               const list = (resp.data || []).map((p) => ({ id: p.id, name: p.name, start: p.start_time ? toDateStr(p.start_time) : '-', end: p.end_time ? toDateStr(p.end_time) : '-' }));
               setProjects(list);
+              const payload = {
+                project_id_list: list.map((p) => p.id),
+                main_start_time: new Date(start).toISOString(),
+                main_end_time: new Date(end).toISOString(),
+              };
+              const regionResp = await layoutService.postRegionLayout(enableRegionFilter ? filterRegion : undefined, payload);
+              const entries = (regionResp.data || []).map((x) => ({
+                project_id: x.project_id,
+                project_name: x.project_name,
+                start_point_ratio: x.start_point_ratio,
+                project_ratio: x.project_ratio ?? x.layout_ratio,
+              }));
+              setRegionLayoutEntries(entries);
             } catch (err) {
               console.error('设置主时间轴或拉取项目失败', err);
             }
@@ -158,6 +174,9 @@ const RegionView = () => {
             setAssignModalOpen(true);
           }}
         />
+        <div style={{ marginTop: 12 }}>
+          <RegionLayoutView entries={regionLayoutEntries} width={900} />
+        </div>
       </div>
 
       {assignModalOpen && (

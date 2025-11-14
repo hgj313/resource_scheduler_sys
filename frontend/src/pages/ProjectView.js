@@ -1,20 +1,14 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
 import EmployeePool from '../components/EmployeePool';
 import projectService from '../services/projectService';
-import DispatchView from '../components/DispatchView';
+import DispatchViewRatio from '../components/DispatchViewRatio';
+import layoutService from '../services/layoutService';
 import Modal from '../components/Modal';
 import '../styles/project.css';
 
-const MOCK_ASSIGNMENTS = [
-  { id: 1, name: '张三', start: '2025-11-01', end: '2025-11-05' },
-  { id: 2, name: '李四', start: '2025-11-02', end: '2025-11-07' },
-  { id: 3, name: '王五', start: '2025-11-03', end: '2025-11-08' },
-  { id: 4, name: '小李', start: '2025-11-09', end: '2025-11-12' },
-  { id: 5, name: '小王', start: '2025-11-14', end: '2025-11-17' },
-];
 
 const ProjectView = () => {
   const { projectId } = useParams();
@@ -23,7 +17,7 @@ const ProjectView = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [assignments, setAssignments] = useState(MOCK_ASSIGNMENTS);
+  const [assignmentsRatio, setAssignmentsRatio] = useState([]);
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
@@ -51,6 +45,20 @@ const ProjectView = () => {
       }
     };
     fetchProjectName();
+  }, [projectId]);
+
+  // 初次进入页面或派遣后，拉取后端员工布局参数
+  useEffect(() => {
+    const fetchLayout = async () => {
+      try {
+        const resp = await layoutService.getProjectLayout(Number(projectId));
+        const entries = (resp.data || []).map((x) => ({ id: x.id, name: x.name, start_point_ratio: x.start_point_ratio, ratio: x.ratio }));
+        setAssignmentsRatio(entries);
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchLayout();
   }, [projectId]);
 
   const toggleSelect = (id) => {
@@ -95,7 +103,7 @@ const ProjectView = () => {
       </div>
 
       <div className="card">
-        <DispatchView assignments={assignments} />
+        <DispatchViewRatio entries={assignmentsRatio} width={900} />
       </div>
 
       {showModal && (
@@ -132,9 +140,10 @@ const ProjectView = () => {
                   const e = new Date(assignEnd).toISOString();
                   for (const empId of selectedIds) {
                     await projectService.assignEmployee(Number(projectId), empId, s, e);
-                    const name = employees.find((x) => x.id === empId)?.name || String(empId);
-                    setAssignments((prev) => ([...prev, { id: Date.now() + Math.random(), name, start: s.slice(0, 10), end: e.slice(0, 10) }]));
                   }
+                  const layoutResp = await layoutService.getProjectLayout(Number(projectId));
+                  const entries = (layoutResp.data || []).map((x) => ({ id: x.id, name: x.name, start_point_ratio: x.start_point_ratio, ratio: x.ratio }));
+                  setAssignmentsRatio(entries);
                   setTimeModalOpen(false);
                   setShowModal(false);
                   setSelectedIds([]);
