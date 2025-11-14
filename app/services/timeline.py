@@ -9,7 +9,7 @@ class NewTimeDelta:
 
     在服务层作为业务计算使用，不直接持久化到数据库。
     """
-
+    
     start_time: datetime
     end_time: datetime
 
