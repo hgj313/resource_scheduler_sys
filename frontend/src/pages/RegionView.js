@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
@@ -6,7 +6,6 @@ import layoutService from '../services/layoutService';
 import RegionLayoutView from '../components/RegionLayoutView';
 import ScrollableLayout from '../components/ScrollableLayout';
 import EmployeePool from '../components/EmployeePool';
-import ProjectPool from '../components/ProjectPool';
 import '../styles/region.css';
 import projectService from '../services/projectService';
 import Modal from '../components/Modal';
@@ -192,19 +191,6 @@ const RegionView = () => {
             />
           )}
         </ScrollableLayout>
-        <div style={{ marginTop: 12 }}>
-          <ProjectPool
-            projects={projects}
-            onOpenProject={(pid) => navigate(`/project/${pid}`)}
-            scale={mainScale}
-            onDropAssign={(pid, emp) => {
-              setAssignTarget({ projectId: pid, employee: emp });
-              setAssignStart('');
-              setAssignEnd('');
-              setAssignModalOpen(true);
-            }}
-          />
-        </div>
       </div>
 
       {assignModalOpen && (

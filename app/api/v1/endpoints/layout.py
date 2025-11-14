@@ -56,7 +56,7 @@ def get_layout_ratio(region:str|None = None,payload:LayoutProject=Body(...,descr
     placeholder = ",".join(["?"]*len(payload.project_id_list))
     SQLR = f"SELECT * FROM projects WHERE region = ? AND id IN({placeholder})"
     SQL = f"SELECT * FROM projects WHERE id IN({placeholder})"
-    if region:
+    if region and region != 'all':
         cur.execute(SQLR,(region,*payload.project_id_list))
     else:
         cur.execute(SQL,(*payload.project_id_list,))
@@ -75,6 +75,6 @@ def get_layout_ratio(region:str|None = None,payload:LayoutProject=Body(...,descr
             start_point_ratio = start_point_ratio,
             project_ratio = project_ratio,
         )
-    project_layout_ratio_list.append(layoutprojectread)
+        project_layout_ratio_list.append(layoutprojectread)
     return project_layout_ratio_list
     
