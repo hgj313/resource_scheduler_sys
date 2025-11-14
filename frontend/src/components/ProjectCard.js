@@ -27,7 +27,10 @@ const ProjectCard = ({ project, onOpen, onDropAssign }) => {
       title={`${project.name}`}
     >
       <div className="project-card__name">{project.name}</div>
-      <div className="project-card__dates">{project.start} ~ {project.end}</div>
+      <div className="project-card__meta">
+        <span className="project-card__id">#{project.id}</span>
+        <span className="project-card__dates">{project.start} ~ {project.end}</span>
+      </div>
     </div>
   );
 };

@@ -22,15 +22,16 @@ function assignLanesByRatio(items) {
   return lanes;
 }
 
-const DispatchViewRatio = ({ entries = [], width = 800 }) => {
+const DispatchViewRatio = ({ entries = [], width = 800, unitLengthPx }) => {
   const lanes = useMemo(() => assignLanesByRatio(entries), [entries]);
+  const base = unitLengthPx || width;
   return (
-    <div className="dispatch-view" style={{ width }}>
+    <div className="dispatch-view" style={{ width: base }}>
       {lanes.map((lane, idx) => (
         <div className="dispatch-view__lane" key={idx}>
           {lane.map((e) => {
-            const left = Math.max(0, Math.min(1, e.start_point_ratio)) * width;
-            const w = Math.max(0, Math.min(1, e.ratio)) * width;
+            const left = Math.max(0, Math.min(1, e.start_point_ratio)) * base;
+            const w = Math.max(0, Math.min(1, e.ratio)) * base;
             return (
               <div className="dispatch-view__item" key={e.id} style={{ left, width: w }} title={e.name}>
                 <span>{e.name}</span>

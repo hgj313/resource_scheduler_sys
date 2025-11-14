@@ -6,6 +6,7 @@ import EmployeePool from '../components/EmployeePool';
 import projectService from '../services/projectService';
 import DispatchViewRatio from '../components/DispatchViewRatio';
 import layoutService from '../services/layoutService';
+import ScrollableLayout from '../components/ScrollableLayout';
 import Modal from '../components/Modal';
 import '../styles/project.css';
 
@@ -18,6 +19,9 @@ const ProjectView = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assignmentsRatio, setAssignmentsRatio] = useState([]);
+  const [zoom, setZoom] = useState(1);
+  const [projectStartISO, setProjectStartISO] = useState('');
+  const [projectEndISO, setProjectEndISO] = useState('');
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
@@ -40,6 +44,10 @@ const ProjectView = () => {
       try {
         const resp = await projectService.getOne(projectId);
         setProjectName(resp.data?.name || String(projectId));
+        if (resp.data?.start_time && resp.data?.end_time) {
+          setProjectStartISO(resp.data.start_time);
+          setProjectEndISO(resp.data.end_time);
+        }
       } catch {
         setProjectName(String(projectId));
       }
@@ -103,7 +111,18 @@ const ProjectView = () => {
       </div>
 
       <div className="card">
-        <DispatchViewRatio entries={assignmentsRatio} width={900} />
+        <ScrollableLayout
+          start={projectStartISO ? new Date(projectStartISO) : new Date()}
+          end={projectEndISO ? new Date(projectEndISO) : new Date()}
+          scale={subScale}
+          zoom={zoom}
+          onZoomChange={setZoom}
+          height={240}
+        >
+          {({ unitLengthPx }) => (
+            <DispatchViewRatio entries={assignmentsRatio} unitLengthPx={unitLengthPx} />
+          )}
+        </ScrollableLayout>
       </div>
 
       {showModal && (

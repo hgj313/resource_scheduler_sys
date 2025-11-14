@@ -4,6 +4,7 @@ import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
 import layoutService from '../services/layoutService';
 import RegionLayoutView from '../components/RegionLayoutView';
+import ScrollableLayout from '../components/ScrollableLayout';
 import EmployeePool from '../components/EmployeePool';
 import ProjectPool from '../components/ProjectPool';
 import '../styles/region.css';
@@ -32,6 +33,9 @@ const RegionView = () => {
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [regionLayoutEntries, setRegionLayoutEntries] = useState([]);
+  const [zoom, setZoom] = useState(1);
+  const [mainStartISO, setMainStartISO] = useState('');
+  const [mainEndISO, setMainEndISO] = useState('');
   const [secondaryReady, setSecondaryReady] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState({ projectId: null, employee: null });
@@ -89,6 +93,8 @@ const RegionView = () => {
               const resp = await filterService.filterProjects();
               const list = (resp.data || []).map((p) => ({ id: p.id, name: p.name, start: p.start_time ? toDateStr(p.start_time) : '-', end: p.end_time ? toDateStr(p.end_time) : '-' }));
               setProjects(list);
+              setMainStartISO(new Date(start).toISOString());
+              setMainEndISO(new Date(end).toISOString());
               const payload = {
                 project_id_list: list.map((p) => p.id),
                 main_start_time: new Date(start).toISOString(),
@@ -175,7 +181,18 @@ const RegionView = () => {
           }}
         />
         <div style={{ marginTop: 12 }}>
-          <RegionLayoutView entries={regionLayoutEntries} width={900} />
+          <ScrollableLayout
+            start={mainStartISO ? new Date(mainStartISO) : new Date()}
+            end={mainEndISO ? new Date(mainEndISO) : new Date()}
+            scale={mainScale}
+            zoom={zoom}
+            onZoomChange={setZoom}
+            height={240}
+          >
+            {({ unitLengthPx }) => (
+              <RegionLayoutView entries={regionLayoutEntries} unitLengthPx={unitLengthPx} />
+            )}
+          </ScrollableLayout>
         </div>
       </div>
 

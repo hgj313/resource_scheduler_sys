@@ -22,15 +22,16 @@ function assignLanesByRatio(items) {
   return lanes;
 }
 
-const RegionLayoutView = ({ entries = [], width = 800, laneHeight = 28 }) => {
+const RegionLayoutView = ({ entries = [], width = 800, laneHeight = 28, unitLengthPx }) => {
   const lanes = useMemo(() => assignLanesByRatio(entries), [entries]);
   return (
-    <div className="region-layout-view" style={{ width }}>
+    <div className="region-layout-view" style={{ width: unitLengthPx || width }}>
       {lanes.map((lane, idx) => (
         <div className="region-layout-view__lane" key={idx} style={{ height: laneHeight }}>
           {lane.map((e) => {
-            const left = Math.max(0, Math.min(1, e.start_point_ratio)) * width;
-            const w = Math.max(0, Math.min(1, e.project_ratio)) * width;
+            const base = unitLengthPx || width;
+            const left = Math.max(0, Math.min(1, e.start_point_ratio)) * base;
+            const w = Math.max(0, Math.min(1, e.project_ratio)) * base;
             return (
               <div
                 key={e.project_id}
