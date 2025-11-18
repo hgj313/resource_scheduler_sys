@@ -155,7 +155,8 @@ def init_db():
             username TEXT NOT NULL UNIQUE,
             password_salt TEXT NOT NULL,
             password_hash TEXT NOT NULL,
-            role TEXT
+            role TEXT,
+            user_email TEXT
         );
         """
     )
@@ -167,8 +168,8 @@ def init_db():
         if (row[0] if isinstance(row, tuple) else row["cnt"]) == 0:
             salt, pwd_hash = hash_password("admin123")
             cur.execute(
-                "INSERT INTO users (username, password_salt, password_hash, role) VALUES (?, ?, ?, ?)",
-                ("admin", salt, pwd_hash, "admin"),
+                "INSERT INTO users (username, password_salt, password_hash, role,user_email) VALUES (?, ?, ?, ?,?)",
+                ("admin", salt, pwd_hash, "admin","3021922280@qq.com"),
             )
     except Exception:
         # 若初始化失败，继续执行，不阻断应用启动

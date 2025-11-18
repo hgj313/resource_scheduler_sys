@@ -9,6 +9,7 @@ import EmployeePool from '../components/EmployeePool';
 import '../styles/region.css';
 import projectService from '../services/projectService';
 import Modal from '../components/Modal';
+import { getCurrentUser } from '../services/authService';
 
 const REGION_NAMES = {
   sw: '西南区域',
@@ -210,9 +211,11 @@ const RegionView = () => {
               onClick={async () => {
                 if (!assignTarget.projectId || !assignTarget.employee || !assignStart || !assignEnd) return;
                 try {
+                  const currentUser = await getCurrentUser();
+                  const userEmail = currentUser ? currentUser.email : '';
                   const s = new Date(assignStart).toISOString();
                   const e = new Date(assignEnd).toISOString();
-                  await projectService.assignEmployee(assignTarget.projectId, assignTarget.employee.id, s, e);
+                  await projectService.assignEmployee(assignTarget.projectId, assignTarget.employee.id, s, e, userEmail);
                   setAssignModalOpen(false);
                 } catch (err) {
                   console.error('派遣失败', err);

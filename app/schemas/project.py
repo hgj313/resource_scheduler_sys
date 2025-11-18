@@ -36,4 +36,4 @@ class ProjectAssignCreate(BaseModel):
     employee_id: int
     start_time: datetime
     end_time: datetime
-    assign_email: EmailStr | None = None
+    user_email: EmailStr | None =None

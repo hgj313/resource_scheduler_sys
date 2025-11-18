@@ -142,7 +142,7 @@ def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.C
             project_id,
             payload.start_time.isoformat(),
             payload.end_time.isoformat(),
-            payload.assign_email,
+            payload.user_email,
         ),
     )
     db.commit()

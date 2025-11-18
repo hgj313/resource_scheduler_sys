@@ -6,6 +6,7 @@ import EmployeePool from '../components/EmployeePool';
 import projectService from '../services/projectService';
 import DispatchViewRatio from '../components/DispatchViewRatio';
 import layoutService from '../services/layoutService';
+import { getCurrentUser } from '../services/authService';
 import ScrollableLayout from '../components/ScrollableLayout';
 import Modal from '../components/Modal';
 import '../styles/project.css';
@@ -155,10 +156,12 @@ const ProjectView = () => {
               onClick={async () => {
                 if (!assignStart || !assignEnd) return;
                 try {
+                  const currentUser = await getCurrentUser();
+                  const userEmail = currentUser ? currentUser.user_email : '';
                   const s = new Date(assignStart).toISOString();
                   const e = new Date(assignEnd).toISOString();
                   for (const empId of selectedIds) {
-                    await projectService.assignEmployee(Number(projectId), empId, s, e);
+                    await projectService.assignEmployee(Number(projectId), empId, s, e, userEmail);
                   }
                   const layoutResp = await layoutService.getProjectLayout(Number(projectId));
                   const entries = (layoutResp.data || []).map((x) => ({ id: x.id, name: x.name, start_point_ratio: x.start_point_ratio, ratio: x.ratio }));
