@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,EmailStr
 from app.services.timeline import NewTimeDelta
 
 
@@ -6,7 +6,7 @@ from app.services.timeline import NewTimeDelta
 class EmployeeBase(BaseModel):
     name: str
     gender: str | None = None
-    email: str 
+    email: EmailStr
     phone: str | None = None
     position: str | None = None
     department: str | None = None
@@ -16,7 +16,7 @@ class EmployeeBase(BaseModel):
 class EmployeeUpdate(BaseModel):
     name: str | None = None
     gender: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     phone: str | None = None
     position: str | None = None
     department: str | None = None

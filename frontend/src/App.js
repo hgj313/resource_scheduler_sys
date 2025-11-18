@@ -14,8 +14,14 @@ import RegionView from './pages/RegionView';
 import ProjectView from './pages/ProjectView';
 import Login from './pages/Login';
 import RequireAuth from './components/common/RequireAuth';
+// 通知系统
+import NotificationManager from './components/NotificationManager';
+import { getCurrentUser } from './services/authService';
 
 function App() {
+  const currentUser = getCurrentUser()
+  const userId = currentUser ? currentUser.email : 'guest'
+
   return (
     <Router>
       <div className="App">
@@ -42,6 +48,9 @@ function App() {
         </main>
         
         <Footer />
+        
+        {/* 全局通知管理器 */}
+        <NotificationManager userId={userId} />
       </div>
     </Router>
   );

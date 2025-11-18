@@ -21,5 +21,14 @@ class Settings(BaseModel):
     # sqlite3 连接选项由DAL管理
     SQLITE_CONNECT_ARGS: dict = {}
 
+    SMTP_HOST:str = os.getenv("SMTP_HOST","")
+    SMTP_PORT:int = int(os.getenv("SMTP_PORT",587))
+    SMTP_USER:str = os.getenv("SMTP_USER","")
+    SMTP_PASSWORD:str = os.getenv("SMTP_PASSWORD","")
+    SMTP_TLS:bool = os.getenv("SMTP_TLS","true").lower() == "true"
+    MAIL_FROM:str = os.getenv("MAIL_FROM","")
+    MANAGER_EMAIL:str = os.getenv("MANAGER_EMAIL","")
+    NOTIFY_ENABLED:bool = os.getenv("NOTIFY_ENABLED","true").lower() == "true"
+
 
 settings = Settings()

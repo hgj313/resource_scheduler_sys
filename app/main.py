@@ -8,18 +8,22 @@ from app.api.v1.endpoints.regions import router as regions_router
 from app.api.v1.endpoints.filters import router as filters_router
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.layout import router as layout_router
+from app.api.v1.endpoints.notifications import router as notifications_router
 from app.core.config import settings
+from app.services.scheduler import scheduler
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app:FastAPI):
     """应用生命周期管理：替代 @app.on_event。
 
     - 在 yield 之前执行启动逻辑（例如初始化数据库）
     - 在 yield 之后执行关闭清理（目前无）
     """
     init_db()
+    scheduler.start()
     yield
+
 
 
 def create_app() -> FastAPI:
@@ -54,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(filters_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(layout_router, prefix="/api/v1")
+    app.include_router(notifications_router,prefix="/api/v1")
 
     @app.get("/healthz", tags=["health"])
     def health_check():

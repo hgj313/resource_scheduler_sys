@@ -174,7 +174,7 @@ const RegionView = () => {
           scale={mainScale}
           zoom={zoom}
           onZoomChange={setZoom}
-          height={260}
+          height={520}
         >
           {({ unitLengthPx }) => (
             <RegionLayoutView

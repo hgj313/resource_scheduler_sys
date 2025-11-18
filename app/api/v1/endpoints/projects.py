@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime,timezone
 from fastapi import APIRouter, Depends, HTTPException
 import sqlite3
 from app.db.session import get_db
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectAssignCreate, AssignmentRead
-
+from app.services.scheduler import schedule_assignment_notifications
 
 router = APIRouter(tags=["projects"], prefix="/projects")
 
@@ -134,14 +134,15 @@ def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.C
 
     cur.execute(
         """
-        INSERT INTO employee_assignments (employee_id, project_id, start_time, end_time)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO employee_assignments (employee_id, project_id, start_time, end_time, assigner_email)
+        VALUES (?, ?, ?, ?, ?)
         """,
         (
             payload.employee_id,
             project_id,
             payload.start_time.isoformat(),
             payload.end_time.isoformat(),
+            payload.assign_email,
         ),
     )
     db.commit()
@@ -150,6 +151,9 @@ def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.C
     r = dict(cur.fetchone())
     r["start_time"] = datetime.fromisoformat(r["start_time"]) if r.get("start_time") else None
     r["end_time"] = datetime.fromisoformat(r["end_time"]) if r.get("end_time") else None
+    if not r["end_time"]:
+        raise HTTPException(status_code=400,detail="end_time is required")
+    schedule_assignment_notifications(aid,r["end_time"].isoformat()) 
     return AssignmentRead(**r)
 
 @router.get("/{project_id}/assignments",response_model = list[AssignmentRead])

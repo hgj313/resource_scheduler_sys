@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,EmailStr
 from datetime import datetime
+
 
 
 class ProjectBase(BaseModel):
@@ -35,3 +36,4 @@ class ProjectAssignCreate(BaseModel):
     employee_id: int
     start_time: datetime
     end_time: datetime
+    assign_email: EmailStr | None = None

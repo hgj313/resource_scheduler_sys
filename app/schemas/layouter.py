@@ -19,5 +19,5 @@ class LayoutProjectRead(BaseModel):
     project_name:str
     start_point_ratio:float
     project_ratio:float
-    class Config:
-        from_attributes = True
+    # class Config:
+    #     from_attributes = True

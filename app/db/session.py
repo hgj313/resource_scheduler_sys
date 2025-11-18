@@ -122,8 +122,27 @@ def init_db():
             project_id INTEGER NOT NULL,
             start_time TEXT,
             end_time TEXT,
+            assigner_email TEXT,
             FOREIGN KEY(employee_id) REFERENCES employees(id) ON DELETE CASCADE,
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+        );
+        """
+    )
+
+    #通知表
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        email TEXT,
+        channel TEXT,
+        TYPE TEXT,
+        assignment_id INTEGER,
+        scheduled_at TEXT,
+        sent_at TEXT,
+        status TEXT,
+        payload_json TEXT
         );
         """
     )

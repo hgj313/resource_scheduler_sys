@@ -1,3 +1,3 @@
 .region-layout-view { position: relative; border: 1px solid #e5e5e5; background: #fafafa; padding: 8px; }
 .region-layout-view__lane { position: relative; margin-bottom: 6px; }
-.region-layout-view__item { position: absolute; height: 24px; background: #4c9aff; color: #fff; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; box-sizing: border-box; }
+.region-layout-view__item { position: absolute; height: 70px; background: #4c9aff; color: #fff; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; box-sizing: border-box; }
