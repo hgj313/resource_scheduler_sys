@@ -14,6 +14,7 @@ import RegionView from './pages/RegionView';
 import ProjectView from './pages/ProjectView';
 import Login from './pages/Login';
 import RequireAuth from './components/common/RequireAuth';
+import NotificationsPage from './pages/NotificationsPage';
 // 通知系统
 import NotificationManager from './components/NotificationManager';
 import { getCurrentUser } from './services/authService';
@@ -44,6 +45,8 @@ function App() {
             {/* 设计要求的区域与项目页面 */}
             <Route path="/region/:regionId" element={<RequireAuth><RegionView /></RequireAuth>} />
             <Route path="/project/:projectId" element={<RequireAuth><ProjectView /></RequireAuth>} />
+            {/* 通知中心页面 */}
+            <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
           </Routes>
         </main>
         

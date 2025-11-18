@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegionCard from '../components/RegionCard';
+import NotificationManager from '../components/NotificationManager';
 import '../styles/main.css';
 import { getCurrentUser, isAuthenticated, logout } from '../services/authService';
 
@@ -29,6 +30,9 @@ const MainPage = () => {
 
   return (
     <div className="main-layout">
+      {/* 通知管理器组件 - 用于显示实时通知 */}
+      <NotificationManager userId={user?.id} />
+      
       <div className="main-left card">
         <h2>仪表盘</h2>
         <div className="user-info">
@@ -39,6 +43,9 @@ const MainPage = () => {
               <div className="actions" style={{ marginTop: 8 }}>
                 <button className="btn" onClick={handleLogout}>退出登录</button>
                 <button className="btn" onClick={handleSwitchAccount} style={{ marginLeft: 8 }}>切换账户</button>
+                <button className="btn btn-primary" onClick={() => navigate('/notifications')} style={{ marginLeft: 8 }}>
+                  通知中心
+                </button>
               </div>
             </>
           ) : (
