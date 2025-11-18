@@ -42,6 +42,8 @@
   flex: 1;
   padding: 20px;
   background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-footer {

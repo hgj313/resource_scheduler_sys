@@ -8,6 +8,6 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   transform-origin: center;
 }
-.region-card--normal { transform: scale(0.618); }
-.region-card--hovered { transform: scale(1.618); box-shadow: 0 6px 12px rgba(0,0,0,0.12); }
+.region-card--normal { transform: scale(0.9); }
+.region-card--hovered { transform: scale(1.08); box-shadow: 0 6px 12px rgba(0,0,0,0.12); }
 .region-card__name { font-weight: 600; color: #333; text-align: center; }
