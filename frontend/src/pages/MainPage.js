@@ -29,9 +29,9 @@ const MainPage = () => {
   };
 
   return (
-    <div className="main-layout">
+    <>
       <NotificationManager userId={user?.id} />
-
+      <div className="main-layout">
       <div className="main-left card">
         <div className="dashboard-panel">
           <div className="panel-section title">仪表盘</div>
@@ -80,7 +80,8 @@ const MainPage = () => {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,17 +1,21 @@
 /* 主页面水墨风与布局 */
 .main-layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 3fr 7fr;
   gap: 16px;
+  height: 100%;
 }
 
 .main-left {
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(1px);
+  display: flex;
 }
 
 .main-right {
   padding: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .region-card-grid {
@@ -30,6 +34,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
 }
 
 .panel-section {
@@ -63,4 +68,11 @@
 
 .panel-button {
   width: 100%;
+}
+
+/* 右侧区域卡片填满可用高度 */
+.region-card-grid.two-cols {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  flex: 1;
 }
