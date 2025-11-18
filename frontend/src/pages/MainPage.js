@@ -30,34 +30,44 @@ const MainPage = () => {
 
   return (
     <div className="main-layout">
-      {/* 通知管理器组件 - 用于显示实时通知 */}
       <NotificationManager userId={user?.id} />
-      
+
       <div className="main-left card">
-        <h2>仪表盘</h2>
-        <div className="user-info">
-          <div>登录状态：{authed ? '已登录' : '未登录'}</div>
-          {authed ? (
-            <>
-              <div>当前用户：{user?.username || '-'}</div>
-              <div className="actions" style={{ marginTop: 8 }}>
-                <button className="btn" onClick={handleLogout}>退出登录</button>
-                <button className="btn" onClick={handleSwitchAccount} style={{ marginLeft: 8 }}>切换账户</button>
-                <button className="btn btn-primary" onClick={() => navigate('/notifications')} style={{ marginLeft: 8 }}>
-                  通知中心
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="actions" style={{ marginTop: 8 }}>
-              <button className="btn btn-primary" onClick={() => navigate('/login')}>去登录</button>
-            </div>
-          )}
+        <div className="dashboard-panel">
+          <div className="panel-section title">仪表盘</div>
+
+          <div className="panel-section">
+            <div className="panel-item">当前用户：{authed ? (user?.username || '-') : '未登录'}</div>
+          </div>
+
+          <div className="panel-row split">
+            <div className="panel-item">职位：{user?.title || '-'}</div>
+            <div className="panel-item">区域：{user?.region || '-'}</div>
+          </div>
+
+          <div className="panel-section">
+            <button className="panel-button btn" onClick={() => navigate('/projects')}>项目列表</button>
+          </div>
+
+          <div className="panel-section">
+            <button className="panel-button btn" onClick={() => navigate('/employees')}>员工列表</button>
+          </div>
+
+          <div className="panel-row split">
+            <button className="panel-button btn" onClick={() => navigate('/assignments')}>派遣记录表</button>
+            <button className="panel-button btn" onClick={() => navigate('/notifications')}>消息通知</button>
+          </div>
+
+          <div className="panel-row split">
+            <button className="panel-button btn" onClick={handleSwitchAccount}>切换账户</button>
+            <button className="panel-button btn" onClick={handleLogout}>退出登录</button>
+          </div>
         </div>
       </div>
+
       <div className="main-right">
         <h2 className="page-title">战略业务聚集地</h2>
-        <div className="region-card-grid">
+        <div className="region-card-grid two-cols">
           {REGIONS.map((r) => (
             <RegionCard
               key={r.id}

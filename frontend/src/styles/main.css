@@ -1,7 +1,7 @@
 /* 主页面水墨风与布局 */
 .main-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 360px 1fr;
   gap: 16px;
 }
 
@@ -19,5 +19,48 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
+.region-card-grid.two-cols {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
 
 .user-info { color: #333; }
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-section {
+  padding: 12px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.panel-section.title {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.panel-row {
+  display: grid;
+  gap: 12px;
+}
+
+.panel-row.split {
+  grid-template-columns: 1fr 1fr;
+}
+
+.panel-item {
+  padding: 12px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.panel-button {
+  width: 100%;
+}
