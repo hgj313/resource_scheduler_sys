@@ -6,7 +6,7 @@ class WSManager:
         self.users:dict[str,set[WebSocket]] = {}
 
     async def connect(self,user_id:str,ws:WebSocket):
-        await ws.accept()
+        # 注意：这里不应该调用 ws.accept()，因为已经在端点中调用了
         self.users.setdefault(user_id,set()).add(ws)
 
     def disconnect(self,user_id:str,ws:WebSocket):
