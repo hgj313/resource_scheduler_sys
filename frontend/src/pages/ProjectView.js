@@ -9,6 +9,7 @@ import layoutService from '../services/layoutService';
 import { getCurrentUser } from '../services/authService';
 import ScrollableLayout from '../components/ScrollableLayout';
 import Modal from '../components/Modal';
+import NotificationManager from '../components/NotificationManager';
 import '../styles/project.css';
 
 
@@ -140,6 +141,15 @@ const ProjectView = () => {
           </div>
         </Modal>
       )}
+
+      {/* 员工通知管理器 - 为每个员工建立WebSocket连接接收实时通知 */}
+      {employees.map(employee => (
+        <NotificationManager 
+          key={employee.id}
+          employeeId={employee.id}
+          mode="employee"
+        />
+      ))}
 
       {timeModalOpen && (
         <Modal title="选择派遣时间段" onClose={() => setTimeModalOpen(false)}>

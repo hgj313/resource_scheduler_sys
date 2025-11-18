@@ -3,14 +3,16 @@ import NotificationToast from './NotificationToast'
 import { connectNotifications, onNotify, disconnectNotifications } from '../services/notifyService'
 import { isAuthenticated, getCurrentUser } from '../services/authService'
 
-const NotificationManager = ({ userId = null }) => {
+const NotificationManager = ({ userId = null, employeeId = null, mode = 'user' }) => {
   const [notifications, setNotifications] = useState([])
   const currentUserIdRef = useRef(null)
 
   useEffect(() => {
     // 获取当前用户信息
     const currentUser = getCurrentUser()
-    const effectiveUserId = userId || (currentUser ? currentUser.email : 'guest')
+    const effectiveUserId = mode === 'employee' ? 
+        (employeeId || (currentUser ? currentUser.id : 'guest')) : 
+        (userId || (currentUser ? currentUser.user_email : 'guest'))
     
     // 只有在用户ID变化时才重新连接
     if (effectiveUserId !== currentUserIdRef.current) {
@@ -37,7 +39,7 @@ const NotificationManager = ({ userId = null }) => {
       // 组件卸载时断开连接
       disconnectNotifications()
     }
-  }, [userId])
+  }, [userId, employeeId, mode])
 
   const removeNotification = (id) => {
     setNotifications(prev => prev.filter(notif => notif.id !== id))

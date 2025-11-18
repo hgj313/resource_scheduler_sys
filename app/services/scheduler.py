@@ -43,6 +43,18 @@ async def _notify_employee_assignment(assignment_id:int):
         "start_time":r["start_time"],
         "end_time":r["end_time"],
     })
+    
+    # 同时向管理者推送派遣通知
+    await ws_manager.push("manager",{
+        "type":"assign_alert",
+        "assignment_id":assignment_id,
+        "employee_id":r["employee_id"],
+        "employee_name":r["employee_name"],
+        "project_name":r["project_name"],
+        "region":r["region"],
+        "start_time":r["start_time"],
+        "end_time":r["end_time"],
+    })
 
 async def _remind_assigner(assignment_id:int,days_before:int):
     conn = get_connection()

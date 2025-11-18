@@ -7,8 +7,8 @@ conf = ConnectionConfig(
     MAIL_FROM = settings.MAIL_FROM or "noreply@example.com",
     MAIL_SERVER = settings.SMTP_HOST,
     MAIL_PORT = settings.SMTP_PORT,
-    MAIL_STARTTLS = settings.SMTP_TLS,
-    MAIL_SSL_TLS = settings.SMTP_TLS,
+    MAIL_STARTTLS = True,  # QQ邮箱使用STARTTLS
+    MAIL_SSL_TLS = False,   # 不使用SSL/TLS
     USE_CREDENTIALS = True,
 )
 

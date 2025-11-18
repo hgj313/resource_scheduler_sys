@@ -10,6 +10,7 @@ import '../styles/region.css';
 import projectService from '../services/projectService';
 import Modal from '../components/Modal';
 import { getCurrentUser } from '../services/authService';
+import NotificationManager from '../components/NotificationManager';
 
 const REGION_NAMES = {
   sw: '西南区域',
@@ -228,6 +229,15 @@ const RegionView = () => {
           </div>
         </Modal>
       )}
+
+      {/* 员工通知管理器 - 为每个员工建立WebSocket连接接收实时通知 */}
+      {employees.map(employee => (
+        <NotificationManager 
+          key={employee.id}
+          employeeId={employee.id}
+          mode="employee"
+        />
+      ))}
     </div>
   );
 };
