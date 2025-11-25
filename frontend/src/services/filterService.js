@@ -12,7 +12,7 @@ const filterService = {
   setSecondaryTimeline: (start, end) => api.put('/filters/secondary-timeline', null, { params: { start: toISO(start), end: toISO(end) } }),
   
   // 根据主时间轴过滤项目
-  filterProjects: () => api.get('/filters/projects'),
+  filterProjects: (region) => api.get('/filters/projects', region ? { params: { region } } : {}),
   
   // 根据副时间轴过滤员工
   filterEmployees: (region) => api.get('/filters/employees', { params: { region } }),

@@ -35,14 +35,18 @@ def set_secondary_timeline(
 
 
 @router.get("/projects", response_model=list[ProjectRead])
-async def filter_projects(db: sqlite3.Connection = Depends(get_db)):
+async def filter_projects(region:str | None = Query(default=None), db: sqlite3.Connection = Depends(get_db)):
     """根据主时间轴过滤项目：返回与主时间轴有交集的项目。"""
     main = timeline_state.get_main()
     if not main:
         raise HTTPException(status_code=400, detail="Main timeline not set")
-
+    
+    # 构建SQL查询，根据区域过滤
     cur = db.cursor()
-    cur.execute("SELECT * FROM projects")
+    if region:
+        cur.execute("SELECT * FROM projects WHERE region = ?", (region,))
+    else:
+        cur.execute("SELECT * FROM projects")
     results: list[ProjectRead] = []
     main_range = NewTimeDelta(main.start_time, main.end_time)
     for r in cur.fetchall():

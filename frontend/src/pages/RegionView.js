@@ -29,7 +29,8 @@ const RegionView = () => {
   const navigate = useNavigate();
   const [mainScale, setMainScale] = useState('month');
   const [subScale, setSubScale] = useState('week');
-  const [enableRegionFilter, setEnableRegionFilter] = useState(false);
+  const [enableProjectRegionFilter, setEnableProjectRegionFilter] = useState(true);
+  const [enableEmployeeRegionFilter, setEnableEmployeeRegionFilter] = useState(true);
   const [filterRegion, setFilterRegion] = useState(REGION_NAMES[regionId] || '');
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -63,12 +64,12 @@ const RegionView = () => {
     try { window.localStorage.setItem('timeline.sub.scale', subScale); } catch {}
   }, [subScale]);
 
-  // 当区域过滤变化且副时间轴已设置时，联动刷新员工
+  // 当员工区域过滤变化且副时间轴已设置时，联动刷新员工
   useEffect(() => {
     const fetchEmployees = async () => {
       if (!secondaryReady) return;
       try {
-        const resp = await filterService.filterEmployees(enableRegionFilter ? filterRegion : undefined);
+        const resp = await filterService.filterEmployees(enableEmployeeRegionFilter ? filterRegion : undefined);
         const list = (resp.data || []).map((e) => ({ id: e.id, name: e.name, role: e.position || '', region: e.region }));
         setEmployees(list);
       } catch (err) {
@@ -76,13 +77,49 @@ const RegionView = () => {
       }
     };
     fetchEmployees();
-  }, [enableRegionFilter, filterRegion, secondaryReady]);
+  }, [enableEmployeeRegionFilter, filterRegion, secondaryReady]);
+
+  // 当项目区域过滤或区域选择变化，且主时间轴已设置时，联动刷新项目与区域布局
+  useEffect(() => {
+    const refreshProjects = async () => {
+      if (!mainStartISO || !mainEndISO) return;
+      try {
+        const resp = await filterService.filterProjects(enableProjectRegionFilter ? filterRegion : undefined);
+        const list = (resp.data || []).map((p) => ({ id: p.id, name: p.name, start: p.start_time ? toDateStr(p.start_time) : '-', end: p.end_time ? toDateStr(p.end_time) : '-' }));
+        setProjects(list);
+        const payload = {
+          project_id_list: list.map((p) => p.id),
+          main_start_time: mainStartISO,
+          main_end_time: mainEndISO,
+        };
+        const regionResp = await layoutService.postRegionLayout(enableProjectRegionFilter ? filterRegion : undefined, payload);
+        const entries = (regionResp.data || []).map((x) => ({
+          project_id: x.project_id,
+          project_name: x.project_name,
+          start_point_ratio: x.start_point_ratio,
+          project_ratio: x.project_ratio ?? x.layout_ratio,
+        }));
+        setRegionLayoutEntries(entries);
+      } catch (err) {
+        console.error('刷新项目或区域布局失败', err);
+      }
+    };
+    refreshProjects();
+  }, [enableProjectRegionFilter, filterRegion, mainStartISO, mainEndISO]);
 
   return (
     <div className="region-layout">
       <div className="region-topbar">
         <button className="btn" onClick={() => navigate('/main')}>返回主页面</button>
         <h2 className="region-title">{REGION_NAMES[regionId] || '区域'}</h2>
+        <label style={{ marginLeft: 12 }}>
+          <input
+            type="checkbox"
+            checked={enableProjectRegionFilter}
+            onChange={(e) => setEnableProjectRegionFilter(e.target.checked)}
+          />
+          启用项目区域过滤
+        </label>
       </div>
 
       <div className="card">
@@ -93,7 +130,7 @@ const RegionView = () => {
           onSetTime={async (start, end) => {
             try {
               await filterService.setMainTimeline(start, end);
-              const resp = await filterService.filterProjects();
+              const resp = await filterService.filterProjects(enableProjectRegionFilter ? filterRegion : undefined);
               const list = (resp.data || []).map((p) => ({ id: p.id, name: p.name, start: p.start_time ? toDateStr(p.start_time) : '-', end: p.end_time ? toDateStr(p.end_time) : '-' }));
               setProjects(list);
               setMainStartISO(new Date(start).toISOString());
@@ -103,7 +140,7 @@ const RegionView = () => {
                 main_start_time: new Date(start).toISOString(),
                 main_end_time: new Date(end).toISOString(),
               };
-              const regionResp = await layoutService.postRegionLayout(enableRegionFilter ? filterRegion : undefined, payload);
+              const regionResp = await layoutService.postRegionLayout(enableProjectRegionFilter ? filterRegion : undefined, payload);
               const entries = (regionResp.data || []).map((x) => ({
                 project_id: x.project_id,
                 project_name: x.project_name,
@@ -123,7 +160,7 @@ const RegionView = () => {
           onSetTime={async (start, end) => {
             try {
               await filterService.setSecondaryTimeline(start, end);
-              const resp = await filterService.filterEmployees(enableRegionFilter ? filterRegion : undefined);
+              const resp = await filterService.filterEmployees(enableEmployeeRegionFilter ? filterRegion : undefined);
               const list = (resp.data || []).map((e) => ({ id: e.id, name: e.name, role: e.position || '', region: e.region }));
               setEmployees(list);
               setSecondaryReady(true);
@@ -141,13 +178,13 @@ const RegionView = () => {
             <label>
               <input
                 type="checkbox"
-                checked={enableRegionFilter}
-                onChange={(e) => setEnableRegionFilter(e.target.checked)}
+                checked={enableEmployeeRegionFilter}
+                onChange={(e) => setEnableEmployeeRegionFilter(e.target.checked)}
               />
-              启用区域过滤
+              启用员工区域过滤
             </label>
             <select
-              disabled={!enableRegionFilter}
+              disabled={!enableEmployeeRegionFilter}
               value={filterRegion}
               onChange={(e) => setFilterRegion(e.target.value)}
             >
