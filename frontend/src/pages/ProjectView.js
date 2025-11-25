@@ -28,6 +28,8 @@ const ProjectView = () => {
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
   const [projectName, setProjectName] = useState('');
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictInfo, setConflictInfo] = useState(null);
 
   // 恢复并持久化副时间轴刻度（确保在组件内部调用hooks）
   useEffect(() => {
@@ -180,12 +182,39 @@ const ProjectView = () => {
                   setShowModal(false);
                   setSelectedIds([]);
                 } catch (err) {
-                  console.error('派遣失败', err);
+                  const data = err?.response?.data;
+                  if (err?.response?.status === 409 && data?.error === '派遣时间冲突') {
+                    setConflictInfo(data);
+                    setConflictOpen(true);
+                  }
                 }
               }}
             >
               确定派遣
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {conflictOpen && (
+        <Modal title={conflictInfo?.message || '派遣时间冲突'} onClose={() => setConflictOpen(false)}>
+          <div style={{ marginBottom: 12 }}>
+            <div>错误：{conflictInfo?.error}</div>
+            <div>冲突数量：{conflictInfo?.conflict_count}</div>
+            <div>建议：{conflictInfo?.suggestion}</div>
+          </div>
+          <div>
+            {(conflictInfo?.conflict_detail || []).map((c) => (
+              <div key={c.id} className="card" style={{ padding: 8, marginBottom: 8 }}>
+                <div>记录ID：{c.id}</div>
+                <div>项目ID：{c.project_id}</div>
+                <div>开始：{c.conflict_start}</div>
+                <div>结束：{c.conflict_end}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <button className="btn" onClick={() => setConflictOpen(false)}>关闭</button>
           </div>
         </Modal>
       )}

@@ -33,9 +33,17 @@ def init_db():
             gender TEXT,
             email TEXT,
             phone TEXT,
-            position TEXT,
-            department TEXT,
-            region TEXT
+            position TEXT CHECK(position IN (
+                '项目经理', '生产经理', '成本经理', '硬景主管', '硬景技术工程师', 
+                '软景主管', '软景工程师', '成本控制工程师', '采购工程师', 
+                '内业工程师', '实习生'
+            )),
+            department TEXT CHECK(department IN (
+                '工程管理部', '项目部', '采购部'
+            )),
+            region TEXT CHECK(region IN (
+                '西南区域', '华中区域', '华南区域', '华东区域'
+            ))
         );
         """
     )

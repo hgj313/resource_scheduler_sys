@@ -68,9 +68,12 @@ async def list_projects(db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.get("/{project_id}", response_model=ProjectRead)
-def get_project(project_id: int, db: sqlite3.Connection = Depends(get_db)):
+def get_project(region:str,project_id: int, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
-    cur.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
+    if region:
+        cur.execute("SELECT * FROM projects WHERE region = ? AND id = ?", (region, project_id))
+    else:
+        cur.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
     r = cur.fetchone()
     if not r:
         raise HTTPException(status_code=404, detail="Project not found")

@@ -5,6 +5,12 @@ const projectService = {
   getAll: () => api.get('/projects/'),
   // 获取单个项目
   getOne: (projectId) => api.get(`/projects/${projectId}`),
+  // 创建项目
+  create: (projectData) => api.post('/projects/', projectData),
+  // 更新项目
+  update: (id, projectData) => api.put(`/projects/${id}`, projectData),
+  // 删除项目
+  delete: (id) => api.delete(`/projects/${id}`),
   // 为项目指派员工（拖拽或勾选后选择时间段）
   assignEmployee: (projectId, employeeId, start, end, userEmail) =>
     api.post(`/projects/${projectId}/assignments`, {

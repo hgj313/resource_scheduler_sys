@@ -30,7 +30,7 @@ const RegionView = () => {
   const [mainScale, setMainScale] = useState('month');
   const [subScale, setSubScale] = useState('week');
   const [enableRegionFilter, setEnableRegionFilter] = useState(false);
-  const [filterRegion, setFilterRegion] = useState(regionId);
+  const [filterRegion, setFilterRegion] = useState(REGION_NAMES[regionId] || '');
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [regionLayoutEntries, setRegionLayoutEntries] = useState([]);
@@ -42,6 +42,8 @@ const RegionView = () => {
   const [assignTarget, setAssignTarget] = useState({ projectId: null, employee: null });
   const [assignStart, setAssignStart] = useState('');
   const [assignEnd, setAssignEnd] = useState('');
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictInfo, setConflictInfo] = useState(null);
 
   // 读取并持久化时间轴刻度（必须在组件内部调用hooks）
   useEffect(() => {
@@ -149,10 +151,10 @@ const RegionView = () => {
               value={filterRegion}
               onChange={(e) => setFilterRegion(e.target.value)}
             >
-              <option value="sw">西南</option>
-              <option value="hz">华中</option>
-              <option value="hn">华南</option>
-              <option value="hd">华东</option>
+              <option value="西南区域">西南区域</option>
+              <option value="华中区域">华中区域</option>
+              <option value="华南区域">华南区域</option>
+              <option value="华东区域">华东区域</option>
             </select>
           </div>
         </div>
@@ -219,13 +221,43 @@ const RegionView = () => {
                   await projectService.assignEmployee(assignTarget.projectId, assignTarget.employee.id, s, e, userEmail);
                   setAssignModalOpen(false);
                 } catch (err) {
-                  console.error('派遣失败', err);
+                  const data = err?.response?.data;
+                  if (err?.response?.status === 409 && data?.error === '派遣时间冲突') {
+                    setConflictInfo(data);
+                    setConflictOpen(true);
+                  }
                 }
               }}
               style={{ marginLeft: 8 }}
             >
               确定派遣
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {conflictOpen && (
+        <Modal
+          title={conflictInfo?.message || '派遣时间冲突'}
+          onClose={() => setConflictOpen(false)}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <div>错误：{conflictInfo?.error}</div>
+            <div>冲突数量：{conflictInfo?.conflict_count}</div>
+            <div>建议：{conflictInfo?.suggestion}</div>
+          </div>
+          <div>
+            {(conflictInfo?.conflict_detail || []).map((c) => (
+              <div key={c.id} className="card" style={{ padding: 8, marginBottom: 8 }}>
+                <div>记录ID：{c.id}</div>
+                <div>项目ID：{c.project_id}</div>
+                <div>开始：{c.conflict_start}</div>
+                <div>结束：{c.conflict_end}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <button className="btn" onClick={() => setConflictOpen(false)}>关闭</button>
           </div>
         </Modal>
       )}

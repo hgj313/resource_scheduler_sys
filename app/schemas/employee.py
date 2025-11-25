@@ -1,5 +1,6 @@
 from pydantic import BaseModel,EmailStr
 from app.services.timeline import NewTimeDelta
+from .enums import RegionEnum, PositionEnum, DepartmentEnum
 
 
 
@@ -8,9 +9,9 @@ class EmployeeBase(BaseModel):
     gender: str | None = None
     email: EmailStr
     phone: str | None = None
-    position: str | None = None
-    department: str | None = None
-    region: str | None = None
+    position: PositionEnum | None = None
+    department: DepartmentEnum | None = None
+    region: RegionEnum | None = None
 
 
 class EmployeeUpdate(BaseModel):
@@ -18,9 +19,9 @@ class EmployeeUpdate(BaseModel):
     gender: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
-    position: str | None = None
-    department: str | None = None
-    region: str | None = None
+    position: PositionEnum | None = None
+    department: DepartmentEnum | None = None
+    region: RegionEnum | None = None
 
 class EmployeeCreate(EmployeeBase):
     pass

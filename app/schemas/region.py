@@ -1,17 +1,16 @@
 from pydantic import BaseModel
-
+from .enums import RegionEnum
 
 class RegionBase(BaseModel):
-    name: str
+    name: RegionEnum
     location: str | None = None
-
 
 class RegionCreate(RegionBase):
     pass
 
 
 class RegionUpdate(BaseModel):
-    name: str | None = None
+    name: RegionEnum | None = None
     location: str | None = None
 
 

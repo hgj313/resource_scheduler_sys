@@ -54,6 +54,11 @@ const MainPage = () => {
           </div>
 
           <div className="panel-row split">
+            <button className="panel-button btn" onClick={() => navigate('/manage-employees')}>员工管理</button>
+            <button className="panel-button btn" onClick={() => navigate('/manage-projects')}>项目管理</button>
+          </div>
+
+          <div className="panel-row split">
             <button className="panel-button btn" onClick={() => navigate('/assignments')}>派遣记录表</button>
             <button className="panel-button btn" onClick={() => navigate('/notifications')}>消息通知</button>
           </div>
