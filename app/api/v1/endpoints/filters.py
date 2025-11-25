@@ -35,7 +35,7 @@ def set_secondary_timeline(
 
 
 @router.get("/projects", response_model=list[ProjectRead])
-def filter_projects(db: sqlite3.Connection = Depends(get_db)):
+async def filter_projects(db: sqlite3.Connection = Depends(get_db)):
     """根据主时间轴过滤项目：返回与主时间轴有交集的项目。"""
     main = timeline_state.get_main()
     if not main:
@@ -75,7 +75,7 @@ def filter_projects(db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.get("/employees", response_model=list[EmployeeAssign])
-def filter_employees(region: str | None = Query(default=None), db: sqlite3.Connection = Depends(get_db)):
+async def filter_employees(region: str | None = Query(default=None), db: sqlite3.Connection = Depends(get_db)):
     """根据副时间轴过滤员工：返回在副时间轴内仍有可用时段的员工。"""
     sec = timeline_state.get_secondary()
     if not sec:

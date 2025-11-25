@@ -34,6 +34,7 @@ class ProjectRead(ProjectBase):
 class ProjectAssignCreate(BaseModel):
     """项目成员指派请求体。"""
     employee_id: int
+    project_id:int|None = None
     start_time: datetime
     end_time: datetime
     user_email: EmailStr | None =None

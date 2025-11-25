@@ -4,12 +4,16 @@ import sqlite3
 from app.db.session import get_db
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectAssignCreate, AssignmentRead
 from app.services.scheduler import schedule_assignment_notifications
+from app.dependencies import get_time_conflict_service
+from app.errorhandler.bussinesserror import TimeConflictError
+from app.service_repo.time_conflict_service import TimeConflictService
+
 
 router = APIRouter(tags=["projects"], prefix="/projects")
 
 
 @router.post("/", response_model=ProjectRead)
-def create_project(payload: ProjectCreate, db: sqlite3.Connection = Depends(get_db)):
+async def create_project(payload: ProjectCreate, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     d = payload.model_dump()
     
@@ -49,7 +53,7 @@ def create_project(payload: ProjectCreate, db: sqlite3.Connection = Depends(get_
 
 
 @router.get("/", response_model=list[ProjectRead])
-def list_projects(db: sqlite3.Connection = Depends(get_db)):
+async def list_projects(db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT * FROM projects")
     rows = []
@@ -79,7 +83,7 @@ def get_project(project_id: int, db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.put("/{project_id}", response_model=ProjectRead)
-def update_project(project_id: int, payload: ProjectUpdate, db: sqlite3.Connection = Depends(get_db)):
+async def update_project(project_id: int, payload: ProjectUpdate, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
     if not cur.fetchone():
@@ -118,7 +122,11 @@ def delete_project(project_id: int, db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.post("/{project_id}/assignments", response_model=AssignmentRead)
-def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.Connection = Depends(get_db)):
+async def assign_employee(
+    project_id: int, payload: ProjectAssignCreate,
+    db: sqlite3.Connection = Depends(get_db),
+     tc: TimeConflictService = Depends(get_time_conflict_service)
+     ):
     """为项目指派员工及其时间段（拖曳分配的接口形态）。"""
     cur = db.cursor()
     # 校验项目与员工存在
@@ -131,6 +139,10 @@ def assign_employee(project_id: int, payload: ProjectAssignCreate, db: sqlite3.C
 
     if payload.end_time <= payload.start_time:
         raise HTTPException(status_code=400, detail="end_time must be greater than start_time")
+    
+    conflicts = await tc.check_time_conflict(payload.employee_id, payload.start_time, payload.end_time)
+    if conflicts:
+        raise TimeConflictError(conflicts)
 
     cur.execute(
         """
@@ -183,7 +195,7 @@ async def read_assignments(project_id:int,db:sqlite3.Connection=Depends(get_db))
 
 
 @router.get("/{project_id}/members", response_model=list[dict])
-def list_members(project_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def list_members(project_id: int, db: sqlite3.Connection = Depends(get_db)):
     """返回项目成员列表，格式近似文档中的 member: {id: name}。"""
     cur = db.cursor()
     cur.execute("SELECT id FROM projects WHERE id = ?", (project_id,))

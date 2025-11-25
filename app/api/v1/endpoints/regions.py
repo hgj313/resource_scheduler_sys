@@ -8,7 +8,7 @@ router = APIRouter(tags=["regions"], prefix="/regions")
 
 
 @router.post("/", response_model=RegionRead)
-def create_region(payload: RegionCreate, db: sqlite3.Connection = Depends(get_db)):
+async def create_region(payload: RegionCreate, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     data = payload.model_dump()
     
@@ -31,7 +31,7 @@ def create_region(payload: RegionCreate, db: sqlite3.Connection = Depends(get_db
 
 
 @router.get("/", response_model=list[RegionRead])
-def list_regions(db: sqlite3.Connection = Depends(get_db)):
+async def list_regions(db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT * FROM regions")
     rows = cur.fetchall()
@@ -39,7 +39,7 @@ def list_regions(db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.get("/{region_id}", response_model=RegionRead)
-def get_region(region_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def get_region(region_id: int, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT * FROM regions WHERE id = ?", (region_id,))
     row = cur.fetchone()
@@ -49,7 +49,7 @@ def get_region(region_id: int, db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.put("/{region_id}", response_model=RegionRead)
-def update_region(region_id: int, payload: RegionUpdate, db: sqlite3.Connection = Depends(get_db)):
+async def update_region(region_id: int, payload: RegionUpdate, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT * FROM regions WHERE id = ?", (region_id,))
     if not cur.fetchone():
@@ -70,7 +70,7 @@ def update_region(region_id: int, payload: RegionUpdate, db: sqlite3.Connection 
 
 
 @router.delete("/{region_id}")
-def delete_region(region_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def delete_region(region_id: int, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("DELETE FROM regions WHERE id = ?", (region_id,))
     if cur.rowcount == 0:

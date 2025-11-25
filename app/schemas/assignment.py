@@ -12,3 +12,11 @@ class AssignmentRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AssignmentUpdate(AssignmentRead):
+    id: int
+    employee_name: str | None = None
+    employee_id: int
+    project_id: int
+    start_time: datetime | None = None
+    end_time: datetime | None = None

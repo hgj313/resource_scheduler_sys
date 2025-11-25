@@ -4,13 +4,13 @@ from datetime import datetime
 from app.db.session import get_db
 from app.schemas.assignment import AssignmentRead
 from app.services.sortlayout import sort_layout_user,sort_layout_project
-from app.services.timeline import NewTimeDelta,project_in_main_timeline
+from app.services.timeline import NewTimeDelta
 from app.schemas.layouter import LayoutRead,LayoutProject,LayoutProjectRead
 
 router = APIRouter(tags=["layout"],prefix="/layout")
 
 @router.get("/{project_id}",response_model=list[LayoutRead])
-def get_layout_ratio(project_id:int,db:sqlite3.Connection = Depends(get_db)):
+async def get_layout_ratio(project_id:int,db:sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("""
     SELECT e.name,ea.* FROM 
@@ -48,7 +48,7 @@ def get_layout_ratio(project_id:int,db:sqlite3.Connection = Depends(get_db)):
 
     
 @router.post("/{region}",response_model=list[LayoutProjectRead])
-def get_layout_ratio(region:str|None = None,payload:LayoutProject=Body(...,description=" Contain project_id and main_timeline"),db:sqlite3.Connection = Depends(get_db)):
+async def get_layout_ratio(region:str|None = None,payload:LayoutProject=Body(...,description=" Contain project_id and main_timeline"),db:sqlite3.Connection = Depends(get_db)):
     main_start_time = payload.main_start_time
     main_end_time = payload.main_end_time
     main_range = NewTimeDelta(main_start_time,main_end_time)

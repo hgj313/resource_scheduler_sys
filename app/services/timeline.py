@@ -35,7 +35,8 @@ def time_intersection(time1: NewTimeDelta, time2: NewTimeDelta) -> NewTimeDelta 
     min_end = min(time1.end_time, time2.end_time)
     if max_start >= min_end:
         return None
-    return NewTimeDelta(start_time=max_start, end_time=min_end)
+    intersection = NewTimeDelta(start_time=max_start, end_time=min_end)
+    return intersection
 
 
 def sum_intersections(intersections: list[NewTimeDelta | None]) -> timedelta:

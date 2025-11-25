@@ -12,6 +12,7 @@ from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.users import router as users_router
 from app.core.config import settings
 from app.services.scheduler import scheduler
+from app.errorhandler.bussinesserror import error_handler_register
 
 
 @asynccontextmanager
@@ -35,6 +36,9 @@ def create_app() -> FastAPI:
     - 注册路由
     """
     app = FastAPI(title="HRC 人力资源调度系统后端", version="0.1.0", lifespan=lifespan)
+
+    #注册错误处理器
+    error_handler_register(app)
 
     # 启用 CORS，允许前端开发环境通过预检（OPTIONS）访问后端
     allowed_origins = [

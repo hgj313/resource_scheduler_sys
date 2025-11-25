@@ -22,7 +22,7 @@ class TokenResponse(BaseModel):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
+async def login(payload: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
     cur = db.cursor()
     cur.execute("SELECT id, username, password_salt, password_hash, role FROM users WHERE username = ?", (payload.username,))
     row = cur.fetchone()
