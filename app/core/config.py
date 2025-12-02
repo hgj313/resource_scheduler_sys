@@ -13,8 +13,7 @@ class Settings(BaseModel):
     - 生产环境可通过环境变量 `DATABASE_URL` 指向 PostgreSQL，例如：
       postgres://user:password@host:5432/dbname
     """
-
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///c:/A-吉盛/技术部协作/DP/hrc/hrc.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:hgj031113@localhost:5432/hrc_database17")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
     # SQLAlchemy 连接额外参数

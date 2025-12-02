@@ -252,7 +252,7 @@ const RegionView = () => {
                 if (!assignTarget.projectId || !assignTarget.employee || !assignStart || !assignEnd) return;
                 try {
                   const currentUser = await getCurrentUser();
-                  const userEmail = currentUser ? currentUser.email : '';
+                  const userEmail = currentUser ? currentUser.user_email : '';
                   const s = new Date(assignStart).toISOString();
                   const e = new Date(assignEnd).toISOString();
                   await projectService.assignEmployee(assignTarget.projectId, assignTarget.employee.id, s, e, userEmail);

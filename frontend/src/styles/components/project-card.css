@@ -4,3 +4,5 @@
 .project-card__meta { display: flex; gap: 8px; align-items: center; }
 .project-card__id { font-size: 12px; color: #888; }
 .project-card__dates { font-size: 12px; color: #666; }
+/* 区域布局中统一名称字号与颜色（与时间、ID一致） */
+.region-layout-view .project-card__name { font-size: 12px; color: green; font-weight: 400; }

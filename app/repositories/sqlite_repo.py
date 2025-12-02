@@ -1,9 +1,10 @@
 import sqlite3
 from fastapi import Depends
 
-from .interfaces import IEmployeeAssignmentRepository
+from .interfaces import IEmployeeAssignmentRepository,IEmployeeRepository
 from ..db.session import get_db
 from app.schemas.project import ProjectAssignCreate
+from app.schemas.employee import EmployeeRead,EmployeeCreate,EmployeeUpdate
 from app.schemas.assignment import AssignmentRead,AssignmentUpdate
 
 class SQLiteEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
@@ -130,3 +131,66 @@ class SQLiteEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
             """,(assignment_id,)
         )
         self.db.commit()
+
+class SQLiteEmployeeRepository(IEmployeeRepository):
+    def __init__(self,db:sqlite3.Connection = Depends(get_db)):
+        self.db =db
+    
+    async def create(self,employee:EmployeeCreate)->EmployeeRead:
+        """创建一个新的员工记录。"""
+        cur = self.db.cursor()
+        cur.execute(
+            """
+            INSERT INTO employees(
+            name,
+            gender,
+            email,
+            phone,
+            position,
+            department,
+            region
+            ) VALUES (?,?,?,?,?,?,?)
+            """,(
+                employee.name,
+                employee.gender,
+                employee.email,
+                employee.phone,
+                employee.position,
+                employee.department,
+                employee.region,
+            )
+        )
+        self.db.commit()
+        id = cur.lastrowid
+        return EmployeeRead(
+            id=id,
+            name=employee.name,
+            gender=employee.gender,
+            email=employee.email,
+            phone=employee.phone,
+            position=employee.position,
+            department=employee.department,
+            region=employee.region,
+        )
+    async def read_by_id(self,employee_id:int)->EmployeeRead:
+        """根据员工ID读取员工记录。"""
+        cur = self.db.cursor()
+        cur.execute(
+            """
+            SELECT 
+            id,
+            name,
+            gender,
+            email,
+            phone,
+            position,
+            department,
+            region
+            FROM employees
+            WHERE id = ?
+            """,(employee_id,)
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404,detail="Employee not found")
+        return EmployeeRead(**dict(row))

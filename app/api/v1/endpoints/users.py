@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-import sqlite3
 from pydantic import BaseModel, EmailStr
 
-from app.db.session import get_db
+from app.dependencies import get_user_repo
+from app.repositories.interfaces import IUserRepository
 from app.core.security import jwt_decode
 from app.core.config import settings
 
@@ -20,7 +20,7 @@ class UserRead(BaseModel):
 
 
 @router.get("/me", response_model=UserRead)
-async def get_user_me(request: Request, db: sqlite3.Connection = Depends(get_db)):
+async def get_user_me(request: Request, repo: IUserRepository = Depends(get_user_repo)):
     """获取当前登录用户的信息。"""
     auth = request.headers.get("Authorization")
     if not auth or not auth.lower().startswith("bearer "):
@@ -34,29 +34,13 @@ async def get_user_me(request: Request, db: sqlite3.Connection = Depends(get_db)
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        cur = db.cursor()
-        cur.execute(
-            "SELECT id, username, role, user_email FROM users WHERE id = ?", 
-            (user_id,)
-        )
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        return UserRead(**dict(row))
+        d = await repo.read_by_id(user_id)
+        return UserRead(**d)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.get("/{user_id}", response_model=UserRead)
-async def get_user(user_id: int, db: sqlite3.Connection = Depends(get_db)):
+async def get_user(user_id: int, repo: IUserRepository = Depends(get_user_repo)):
     """根据用户ID获取用户信息。"""
-    cur = db.cursor()
-    cur.execute(
-        "SELECT id, username, role, user_email FROM users WHERE id = ?", 
-        (user_id,)
-    )
-    row = cur.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return UserRead(**dict(row))
+    d = await repo.read_by_id(user_id)
+    return UserRead(**d)

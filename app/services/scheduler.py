@@ -2,79 +2,80 @@ from datetime import datetime,timedelta,timezone
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-import sqlite3
 import json
 from app.core.config import settings
-from app.db.session import get_connection
+from app.db.session import SessionLocal
+from sqlalchemy import select
+from app.db.models import EmployeeAssignment, Employee, Project
 from .mailer import send_email
 from .ws import ws_manager
 
 scheduler = AsyncIOScheduler(timezone=timezone.utc, jobstores={"default": SQLAlchemyJobStore(url=settings.DATABASE_URL)})
 
 async def _notify_employee_assignment(assignment_id:int):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT ea.id, ea.employee_id, ea.project_id, ea.start_time, ea.end_time,
-               e.email AS email, e.name AS employee_name,
-               p.name AS project_name, p.region AS region
-        FROM employee_assignments ea
-        JOIN employees e ON e.id = ea.employee_id
-        JOIN projects p ON p.id = ea.project_id
-        WHERE ea.id = ?
-        """,(assignment_id,)
-    )
-    r = cur.fetchone()
+    db = SessionLocal()
+    try:
+        stmt = (
+            select(EmployeeAssignment.id, EmployeeAssignment.employee_id, EmployeeAssignment.project_id,
+                   EmployeeAssignment.start_time, EmployeeAssignment.end_time,
+                   Employee.email.label("email"), Employee.name.label("employee_name"),
+                   Project.name.label("project_name"), Project.region.label("region"))
+            .join(Employee, Employee.id == EmployeeAssignment.employee_id)
+            .join(Project, Project.id == EmployeeAssignment.project_id)
+            .where(EmployeeAssignment.id == assignment_id)
+        )
+        r = db.execute(stmt).first()
+    finally:
+        db.close()
     if not r:
         return
-    employee_email = r["email"]
-    subject = f"[派遣通知] {r['employee_name']} → {r['region']}/{r['project_name']}"
-    html = f"<div><p>分配者已将你派往{r['region']}的项目{r['project_name']}</p><p>派遣时间：{r['start_time']}至{r['end_time']}</p></div>"
+    employee_email = r.email
+    subject = f"[派遣通知] {r.employee_name} → {r.region}/{r.project_name}"
+    html = f"<div><p>分配者已将你派往{r.region}的项目{r.project_name}</p><p>派遣时间：{r.start_time}至{r.end_time}</p></div>"
     try:
         await send_email(employee_email,subject,html)
     except:
         pass
-    await ws_manager.push(str(r["employee_id"]),{
+    await ws_manager.push(str(r.employee_id),{
         "type":"assign",
         "assignment_id":assignment_id,
-        "project_id":r["project_id"],
-        "region":r["region"],
-        "start_time":r["start_time"],
-        "end_time":r["end_time"],
+        "project_id":r.project_id,
+        "region":r.region,
+        "start_time":r.start_time,
+        "end_time":r.end_time,
     })
     
     # 同时向管理者推送派遣通知
     await ws_manager.push("manager",{
         "type":"assign_alert",
         "assignment_id":assignment_id,
-        "employee_id":r["employee_id"],
-        "employee_name":r["employee_name"],
-        "project_name":r["project_name"],
-        "region":r["region"],
-        "start_time":r["start_time"],
-        "end_time":r["end_time"],
+        "employee_id":r.employee_id,
+        "employee_name":r.employee_name,
+        "project_name":r.project_name,
+        "region":r.region,
+        "start_time":r.start_time,
+        "end_time":r.end_time,
     })
 
 async def _remind_assigner(assignment_id:int,days_before:int):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT ea.id,ea.employee_id,ea.project_id,ea.start_time,ea.end_time,
-        ea.assigner_email, e.name as employee_name, p.name as project_name, p.region as region
-        FROM employee_assignments ea
-        JOIN employees e ON e.id = ea.employee_id
-        JOIN projects p ON p.id = ea.project_id
-        WHERE ea.id = ?
-        """,(assignment_id,)
-    )
-    r = cur.fetchone()
+    db = SessionLocal()
+    try:
+        stmt = (
+            select(EmployeeAssignment.id, EmployeeAssignment.employee_id, EmployeeAssignment.project_id,
+                   EmployeeAssignment.start_time, EmployeeAssignment.end_time, EmployeeAssignment.assigner_email,
+                   Employee.name.label("employee_name"), Project.name.label("project_name"), Project.region.label("region"))
+            .join(Employee, Employee.id == EmployeeAssignment.employee_id)
+            .join(Project, Project.id == EmployeeAssignment.project_id)
+            .where(EmployeeAssignment.id == assignment_id)
+        )
+        r = db.execute(stmt).first()
+    finally:
+        db.close()
     if not r:
         return
-    assigner_email = r["assigner_email"] or settings.MANAGER_EMAIL
-    subject = f"[到期提醒D-{days_before}]{r['employee_name']}->{r['region']}/{r['project_name']}"
-    html = f"<div><p>员工{r['employee_name']}在{r['region']}/{r['project_name']}项目的派遣时间距离到期还有{days_before}天</p><p>派遣时间：{r['start_time']}至{r['end_time']}</p></div>"
+    assigner_email = r.assigner_email or settings.MANAGER_EMAIL
+    subject = f"[到期提醒D-{days_before}]{r.employee_name}->{r.region}/{r.project_name}"
+    html = f"<div><p>员工{r.employee_name}在{r.region}/{r.project_name}项目的派遣时间距离到期还有{days_before}天</p><p>派遣时间：{r.start_time}至{r.end_time}</p></div>"
     if assigner_email:
         try:
             await send_email(assigner_email,subject,html)
@@ -84,11 +85,11 @@ async def _remind_assigner(assignment_id:int,days_before:int):
     await ws_manager.push(assigner_email or "manager",{
         "type":"reminder",
         "assignment_id":assignment_id,
-        "project_id":r["project_id"],
-        "employee_id":r["employee_id"],
+        "project_id":r.project_id,
+        "employee_id":r.employee_id,
         "days_before":days_before,
-        "start_time":r["start_time"],
-        "end_time":r["end_time"],
+        "start_time":r.start_time,
+        "end_time":r.end_time,
     })
 
 def schedule_assignment_notifications(assignment_id:int,end_time_iso:str):

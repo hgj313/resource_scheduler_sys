@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-import sqlite3
+from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import get_session
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, jwt_encode, jwt_decode
+from sqlalchemy import select
+from app.db.models import User
 
 
 router = APIRouter(tags=["auth"], prefix="/auth")
@@ -22,17 +24,14 @@ class TokenResponse(BaseModel):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
-    cur = db.cursor()
-    cur.execute("SELECT id, username, password_salt, password_hash, role FROM users WHERE username = ?", (payload.username,))
-    row = cur.fetchone()
-    if not row:
+async def login(payload: LoginRequest, session: Session = Depends(get_session)):
+    obj = session.execute(select(User).where(User.username == payload.username)).scalar_one_or_none()
+    if not obj:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    user = dict(row)
-    if not verify_password(payload.password, user["password_salt"], user["password_hash"]):
+    if not verify_password(payload.password, obj.password_salt, obj.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = jwt_encode({"sub": user["id"], "username": user["username"], "role": user.get("role")}, settings.SECRET_KEY, 3600 * 12)
-    return TokenResponse(access_token=token, user={"id": user["id"], "username": user["username"], "role": user.get("role")})
+    token = jwt_encode({"sub": obj.id, "username": obj.username, "role": obj.role}, settings.SECRET_KEY, 3600 * 12)
+    return TokenResponse(access_token=token, user={"id": obj.id, "username": obj.username, "role": obj.role})
 
 
 @router.get("/me")
