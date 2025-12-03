@@ -10,6 +10,7 @@ import CreateEmployee from './pages/CreateEmployee';
 import CreateProject from './pages/CreateProject';
 import EmployeesManagement from './pages/EmployeesManagement';
 import ProjectsManagement from './pages/ProjectsManagement';
+import FenBaosManagement from './pages/FenBaosManagement';
 import Regions from './pages/Regions';
 import Assignments from './pages/Assignments';
 // 新增设计页面
@@ -48,6 +49,7 @@ function App() {
             <Route path="/create-project" element={<RequireAuth><CreateProject /></RequireAuth>} />
             <Route path="/manage-employees" element={<RequireAuth><EmployeesManagement /></RequireAuth>} />
             <Route path="/manage-projects" element={<RequireAuth><ProjectsManagement /></RequireAuth>} />
+            <Route path="/manage-fenbaos" element={<RequireAuth><FenBaosManagement /></RequireAuth>} />
             <Route path="/regions" element={<Regions />} />
             <Route path="/assignments" element={<Assignments />} />
             {/* 设计要求的区域与项目页面 */}

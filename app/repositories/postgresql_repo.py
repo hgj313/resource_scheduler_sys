@@ -600,8 +600,13 @@ class PostgresFenBaoRepository(IFenBaoRepository):
 
     async def read_all(self)->List[FenBaoRead]:
         """列出所有分包"""
-        stmt = select(FenBao)
-        fens = self.session.execute(stmt).scalars().all()
+        
+        stmt1 = select(FenBao).limit(1)
+        fenbao = self.session.execute(stmt1).scalar_one_or_none()
+        if not fenbao:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        stmt2 = select(FenBao)
+        fens = self.session.execute(stmt2).scalars().all()
         return [FenBaoRead.model_validate(f) for f in fens]
 
     async def update(self,fenbao_id:int,fenbao:FenBaoUpdate)->FenBaoRead:

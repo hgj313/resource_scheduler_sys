@@ -59,6 +59,11 @@ const MainPage = () => {
           </div>
 
           <div className="panel-row split">
+            <button className="panel-button btn" onClick={() => navigate('/manage-fenbaos')}>分包管理</button>
+            <button className="panel-button btn" onClick={() => navigate('/employees')}>员工列表</button>
+          </div>
+
+          <div className="panel-row split">
             <button className="panel-button btn" onClick={() => navigate('/assignments')}>派遣记录表</button>
             <button className="panel-button btn" onClick={() => navigate('/notifications')}>消息通知</button>
           </div>

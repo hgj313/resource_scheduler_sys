@@ -105,6 +105,9 @@ class IRegionRepository(ABC):
     @abstractmethod
     async def delete(self, region_id: int) -> None:
         pass
+    @abstractmethod
+    async def get_employee_count(self, region_id: int) -> int:
+        pass
 
 class IFilterRepository(ABC):
     @abstractmethod

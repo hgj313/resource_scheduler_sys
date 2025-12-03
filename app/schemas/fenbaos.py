@@ -1,11 +1,11 @@
 from textwrap import indent
-from pydantic import BaseModel,ConfigDict
+from pydantic import BaseModel,ConfigDict,Field
 
 class FenBaoBase(BaseModel):
-    name:str
-    professional:str
-    staff_count:int
-    level:str
+    name:str = Field(...,min_length=1,strip_whitespace=True)
+    professional:str = Field(...,min_length=1,strip_whitespace=True)
+    staff_count:int = Field(...,ge=1)
+    level:str = Field(...,min_length=1,strip_whitespace=True)
     model_config = ConfigDict(from_attributes=True)
 
 class FenBaoCreate(FenBaoBase):

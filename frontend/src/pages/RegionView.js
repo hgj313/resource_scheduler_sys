@@ -11,6 +11,7 @@ import projectService from '../services/projectService';
 import Modal from '../components/Modal';
 import { getCurrentUser } from '../services/authService';
 import NotificationManager from '../components/NotificationManager';
+import fenbaoService from '../services/fenbaoService';
 
 const REGION_NAMES = {
   sw: '西南区域',
@@ -34,6 +35,7 @@ const RegionView = () => {
   const [filterRegion, setFilterRegion] = useState(REGION_NAMES[regionId] || '');
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [fenbaos, setFenbaos] = useState([]);
   const [regionLayoutEntries, setRegionLayoutEntries] = useState([]);
   const [zoom, setZoom] = useState(1);
   const [mainStartISO, setMainStartISO] = useState('');
@@ -106,6 +108,19 @@ const RegionView = () => {
     };
     refreshProjects();
   }, [enableProjectRegionFilter, filterRegion, mainStartISO, mainEndISO]);
+
+  useEffect(() => {
+    const loadFenbaos = async () => {
+      try {
+        const resp = await fenbaoService.getAll();
+        const list = (resp.data || []).map((f) => ({ id: f.id, name: f.name, professional: f.professional, staff_count: f.staff_count, level: f.level }));
+        setFenbaos(list);
+      } catch (err) {
+        // ignore
+      }
+    };
+    loadFenbaos();
+  }, []);
 
   return (
     <div className="region-layout">
@@ -206,6 +221,23 @@ const RegionView = () => {
             } catch {}
           }}
         />
+      </div>
+
+      <div className="card">
+        <div className="employee-pool-header">
+          <div>分包列表：共 {fenbaos.length} 个</div>
+        </div>
+        <div style={{ display:'grid', gap:8 }}>
+          {(fenbaos || []).map((f) => (
+            <div key={f.id} className="card" style={{ padding:8 }}>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <strong>{f.name}</strong>
+                <span>等级：{f.level}</span>
+              </div>
+              <div>专业：{f.professional}；人数：{f.staff_count}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="card">
