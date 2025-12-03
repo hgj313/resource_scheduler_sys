@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 from datetime import datetime
 
 class LayoutRead(BaseModel):
@@ -6,8 +6,7 @@ class LayoutRead(BaseModel):
     name:str
     start_point_ratio:float
     ratio:float
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class LayoutProject(BaseModel):
     project_id_list:list[int]
@@ -19,5 +18,4 @@ class LayoutProjectRead(BaseModel):
     project_name:str
     start_point_ratio:float
     project_ratio:float
-    # class Config:
-    #     from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,7 +1,14 @@
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, UniqueConstraint
-
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, UniqueConstraint, Table
 Base = declarative_base()
+
+fenbao_projects = Table(
+    "fenbao_projects",
+    Base.metadata,
+    Column("fenbao_id", Integer, ForeignKey("fenbaos.id"), primary_key=True),
+    Column("project_id", Integer, ForeignKey("projects.id"), primary_key=True),
+    UniqueConstraint("fenbao_id", "project_id", name="uq_fenbao_project")
+)
 
 class Employee(Base):
     __tablename__ = "employees"
@@ -28,6 +35,7 @@ class Project(Base):
     region = Column(String)
     start_time = Column(String)
     end_time = Column(String)
+    fenbaos = relationship("FenBao", secondary=fenbao_projects, back_populates="projects")
 
 class Region(Base):
     __tablename__ = "regions"
@@ -63,3 +71,4 @@ class FenBao(Base):
     professional = Column(String,nullable=False)
     staff_count = Column(Integer,nullable=False)
     level = Column(String,nullable=False)
+    projects = relationship("Project", secondary=fenbao_projects, back_populates="fenbaos")

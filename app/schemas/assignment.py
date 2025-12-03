@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 from datetime import datetime
 
 
@@ -9,9 +9,7 @@ class AssignmentRead(BaseModel):
     project_id: int
     start_time: datetime | None = None
     end_time: datetime | None = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AssignmentUpdate(AssignmentRead):
     id: int

@@ -10,7 +10,9 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.layout import router as layout_router
 from app.api.v1.endpoints.notifications import router as notifications_router
 from app.api.v1.endpoints.users import router as users_router
+from app.api.v1.endpoints.fenbaos import router as fenbaos_router
 from app.core.config import settings
+from app.schemas import fenbaos
 from app.services.scheduler import scheduler
 from app.errorhandler.bussinesserror import error_handler_register
 
@@ -65,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(layout_router, prefix="/api/v1")
     app.include_router(notifications_router,prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(fenbaos_router, prefix="/api/v1")
 
     @app.get("/healthz", tags=["health"])
     def health_check():

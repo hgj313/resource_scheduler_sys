@@ -1,4 +1,4 @@
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel,EmailStr,ConfigDict
 from datetime import datetime
 
 
@@ -7,7 +7,7 @@ class ProjectBase(BaseModel):
     name: str
     value: float = 0.0
     region: str | None = None
-
+    model_config = ConfigDict(from_attributes=True)
 
 class ProjectCreate(ProjectBase):
     start_time: datetime
@@ -26,10 +26,6 @@ class ProjectRead(ProjectBase):
     id: int
     start_time: datetime | None = None
     end_time: datetime | None = None
-
-    class Config:
-        from_attributes = True
-
 
 class ProjectAssignCreate(BaseModel):
     """项目成员指派请求体。"""

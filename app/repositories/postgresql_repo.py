@@ -1,16 +1,18 @@
+from re import L
 from sqlalchemy.orm import Session
 from datetime import datetime
 from sqlalchemy import select, update, delete
 from fastapi import Depends, HTTPException
 from app.db.session import get_session
-from app.db.models import EmployeeAssignment, Employee, Project, Region, User
-from .interfaces import IEmployeeAssignmentRepository, IEmployeeRepository, IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository
+from app.db.models import EmployeeAssignment, Employee, Project, Region, User, FenBao
+from .interfaces import IEmployeeAssignmentRepository, IEmployeeRepository, IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository,IFenBaoRepository
 from app.schemas import ProjectRead
 from app.schemas.employee import EmployeeAssign
 from app.services.timeline import NewTimeDelta, project_in_main_timeline, employee_available_in_secondary
 from app.schemas.project import ProjectAssignCreate
 from app.schemas.employee import EmployeeRead, EmployeeCreate, EmployeeUpdate
 from app.schemas.assignment import AssignmentRead, AssignmentUpdate
+from app.schemas.fenbaos import FenBaoRead, FenBaoCreate, FenBaoUpdate
 from typing import List
 
 class PostgresEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
@@ -36,7 +38,18 @@ class PostgresEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
             start_time=assignment.start_time,
             end_time=assignment.end_time,
         )
-
+    async def read_by_id(self,assignment_id:int) ->AssignmentRead:
+        assignment = self.session.get(EmployeeAssignment,assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        return AssignmentRead(
+            id=assignment.id,
+            employee_name=None,
+            employee_id=assignment.employee_id,
+            project_id=assignment.project_id,
+            start_time=assignment.start_time,
+            end_time=assignment.end_time,
+        )
     async def read_by_employee_id(self, employee_id: int) -> list[AssignmentRead]:
         stmt = (
             select(EmployeeAssignment.id, EmployeeAssignment.employee_id, EmployeeAssignment.project_id,
@@ -91,24 +104,17 @@ class PostgresEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
             results.append(AssignmentRead(**d))
         return results
 
-    async def update(self, assignment: AssignmentUpdate) -> AssignmentRead:
+    async def update(self, assignment_id:int,assignment: AssignmentUpdate) -> AssignmentRead:
         values = {
             "employee_id": assignment.employee_id,
             "project_id": assignment.project_id,
             "start_time": assignment.start_time.isoformat() if assignment.start_time else None,
             "end_time": assignment.end_time.isoformat() if assignment.end_time else None,
         }
-        stmt = update(EmployeeAssignment).where(EmployeeAssignment.id == assignment.id).values(**values)
+        stmt = update(EmployeeAssignment).where(EmployeeAssignment.id == assignment_id).values(**values)
         self.session.execute(stmt)
         self.session.commit()
-        return AssignmentRead(
-            id=assignment.id,
-            employee_name=None,
-            employee_id=assignment.employee_id,
-            project_id=assignment.project_id,
-            start_time=assignment.start_time,
-            end_time=assignment.end_time,
-        )
+        return await self.read_by_id(assignment_id)
 
     async def delete(self, assignment_id: int) -> None:
         stmt = delete(EmployeeAssignment).where(EmployeeAssignment.id == assignment_id)
@@ -399,6 +405,60 @@ class PostgresProjectRepository(IProjectRepository):
             out.append(ProjectRead(id=r.id, name=r.name, value=r.value, region=r.region, start_time=start, end_time=end))
         return out
 
+    async def add_fenbao(self, project_id: int, fenbao_id: int) -> dict[str, str]:
+        from sqlalchemy.exc import IntegrityError
+        p = self.session.get(Project, project_id)
+        if not p:
+            raise HTTPException(status_code=404, detail="Project not found")
+        f = self.session.get(FenBao, fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404, detail="FenBao not found")
+        try:
+            p.fenbaos.append(f)
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+            raise HTTPException(status_code=400, detail="Relation already exists")
+        return {"message":"FenBao added to project successfully"}
+    
+    async def remove_fenbao(self, project_id: int, fenbao_id: int) -> List[FenBaoRead]:
+        p = self.session.get(Project, project_id)
+        if not p:
+            raise HTTPException(status_code=404, detail="Project not found")
+        f = self.session.get(FenBao, fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404, detail="FenBao not found")
+        try:
+            p.fenbaos.remove(f)
+            self.session.commit()
+        except ValueError:
+            self.session.rollback()
+            raise HTTPException(status_code=404, detail="Relation not found")
+        out = []
+        for x in p.fenbaos:
+            out.append(FenBaoRead(id=x.id, name=x.name, professional=x.professional, staff_count=x.staff_count, level=x.level))
+        return out
+
+    async def read_all_fenbaos(self, project_id: int) -> List[FenBaoRead]:
+        p = self.session.get(Project, project_id)
+        if not p:
+            raise HTTPException(status_code=404, detail="Project not found")
+        out = []
+        for x in p.fenbaos:
+            out.append(FenBaoRead(id=x.id, name=x.name, professional=x.professional, staff_count=x.staff_count, level=x.level))
+        return out
+
+    async def list_projects_by_fenbao(self, fenbao_id: int) -> List[ProjectRead]:
+        f = self.session.get(FenBao, fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404, detail="FenBao not found")
+        out = []
+        for p in f.projects:
+            start = datetime.fromisoformat(p.start_time) if p.start_time else None
+            end = datetime.fromisoformat(p.end_time) if p.end_time else None
+            out.append(ProjectRead(id=p.id, name=p.name, value=p.value, region=p.region, start_time=start, end_time=end))
+        return out
+
 class PostgresUserRepository(IUserRepository):
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
@@ -499,3 +559,77 @@ class PostgresUserRepository(IUserRepository):
         stmt = delete(Employee).where(Employee.id == employee_id)
         self.session.execute(stmt)
         self.session.commit()
+
+class PostgresFenBaoRepository(IFenBaoRepository):
+    def __init__(self,session:Session = Depends(get_session)):
+        self.session = session
+    
+    async def create(self,fenbao:FenBaoCreate)->dict:
+        """创建一个新的分包"""
+        f = self.session.execute(select(FenBao).where(FenBao.name == fenbao.name)).scalar_one_or_none()
+        if f:
+            raise HTTPException(status_code=400,detail="FenBao name already exists")
+        f = FenBao(**fenbao.model_dump())
+        self.session.add(f)
+        self.session.commit()
+        return {"message":"FenBao created successfully"}
+
+
+    async def read_by_id(self,fenbao_id:int)->FenBaoRead:
+        """根据分包ID读取分包信息"""
+        f = self.session.get(FenBao,fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        return FenBaoRead.model_validate(f)
+
+    async def read_by_name(self,name:str)->FenBaoRead:
+        """根据分包名称读取分包信息"""
+        stmt = select(FenBao).where(FenBao.name == name)
+        f = self.session.execute(stmt).scalar_one_or_none()
+        if not f:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        return FenBaoRead.model_validate(f)
+
+    async def read_by_professional(self,professional:str)->FenBaoRead:
+        """根据专业读取分包信息"""
+        stmt = select(FenBao).where(FenBao.professional == professional)
+        f = self.session.execute(stmt).scalar_one_or_none()
+        if not f:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        return FenBaoRead.model_validate(f)
+
+    async def read_all(self)->List[FenBaoRead]:
+        """列出所有分包"""
+        stmt = select(FenBao)
+        fens = self.session.execute(stmt).scalars().all()
+        return [FenBaoRead.model_validate(f) for f in fens]
+
+    async def update(self,fenbao_id:int,fenbao:FenBaoUpdate)->FenBaoRead:
+        """更新一个分包"""
+        f = self.session.get(FenBao,fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        values = {}
+        if fenbao.name is not None:
+            values["name"] = fenbao.name
+        if fenbao.professional is not None:
+            values["professional"] = fenbao.professional
+        if fenbao.staff_count is not None:
+            values["staff_count"] = fenbao.staff_count
+        if fenbao.level is not None:
+            values["level"] = fenbao.level
+        if values:
+            stmt = update(FenBao).where(FenBao.id == fenbao_id).values(**values)
+            self.session.execute(stmt)
+            self.session.commit()
+        return await self.read_by_id(fenbao_id)
+
+    async def delete(self,fenbao_id:int)->dict:
+        """删除一个分包"""
+        f = self.session.get(FenBao,fenbao_id)
+        if not f:
+            raise HTTPException(status_code=404,detail="FenBao not found")
+        stmt = delete(FenBao).where(FenBao.id == fenbao_id)
+        self.session.execute(stmt)
+        self.session.commit()
+        return {"message":"Fenbao delete seccessfully"}

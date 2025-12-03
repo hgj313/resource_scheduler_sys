@@ -1,4 +1,4 @@
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel,EmailStr,ConfigDict
 from app.services.timeline import NewTimeDelta
 from .enums import RegionEnum, PositionEnum, DepartmentEnum
 
@@ -22,6 +22,7 @@ class EmployeeUpdate(BaseModel):
     position: PositionEnum | None = None
     department: DepartmentEnum | None = None
     region: RegionEnum | None = None
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeCreate(EmployeeBase):
     pass
@@ -30,11 +31,5 @@ class EmployeeCreate(EmployeeBase):
 class EmployeeRead(EmployeeBase):
     id: int
 
-    class Config:
-        from_attributes = True
-
 class EmployeeAssign(EmployeeRead):
     assign_timeline:list[NewTimeDelta]|None=None
-
-    class Config:
-        from_attributes = True

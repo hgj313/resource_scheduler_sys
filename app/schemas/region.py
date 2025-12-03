@@ -1,9 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 from .enums import RegionEnum
 
 class RegionBase(BaseModel):
     name: RegionEnum
     location: str | None = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RegionCreate(RegionBase):
     pass
@@ -16,6 +18,3 @@ class RegionUpdate(BaseModel):
 
 class RegionRead(RegionBase):
     id: int
-
-    class Config:
-        from_attributes = True

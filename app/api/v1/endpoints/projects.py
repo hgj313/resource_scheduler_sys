@@ -6,6 +6,7 @@ from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectAssign
 from app.db.models import Project, Employee
 from app.services.scheduler import schedule_assignment_notifications
 from app.dependencies import get_time_conflict_service
+from app.schemas.assignment import AssignmentUpdate
 from app.repositories.interfaces import IEmployeeAssignmentRepository, IProjectRepository
 from app.dependencies import get_assignment_repo, get_project_repo
 from app.errorhandler.bussinesserror import TimeConflictError
@@ -68,6 +69,15 @@ async def assign_employee(
     schedule_assignment_notifications(created.id, created.end_time.isoformat())
     return created
 
+@router.put("/{project_id}/assignments/{assignment_id}",response_model=AssignmentRead)
+async def update_assignment(
+    project_id:int,
+    assignment_id:int,
+    payload:AssignmentUpdate,
+    repo:IEmployeeAssignmentRepository = Depends(get_assignment_repo)
+):
+    return await repo.update(assignment_id,payload)
+
 @router.get("/{project_id}/assignments",response_model = list[AssignmentRead])
 async def read_assignments(project_id:int, repo: IEmployeeAssignmentRepository = Depends(get_assignment_repo)):
     return await repo.read_by_project_id(project_id)
@@ -87,3 +97,19 @@ async def list_members(project_id: int, repo: IEmployeeAssignmentRepository = De
             seen[a.employee_id] = True
             out.append({"employee_id": a.employee_id, "name": a.employee_name})
     return out
+
+@router.post("/{project_id}/fenbao")
+async def create_fenbao_assignment(
+    project_id:int,
+    fenbao_id:int,
+    repo:IProjectRepository = Depends(get_project_repo)
+):
+    return await repo.add_fenbao(project_id,fenbao_id)
+
+@router.delete("/{project_id}/fenbao")
+async def delete_fenbao_assignment(
+    project_id:int,
+    fenbao_id:int,
+    repo:IProjectRepository = Depends(get_project_repo)
+):
+    return await repo.remove_fenbao(project_id,fenbao_id)
