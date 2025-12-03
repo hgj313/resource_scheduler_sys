@@ -1,7 +1,7 @@
 from re import L
 from sqlalchemy.orm import Session
 from datetime import datetime
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from fastapi import Depends, HTTPException
 from app.db.session import get_session
 from app.db.models import EmployeeAssignment, Employee, Project, Region, User, FenBao
@@ -229,45 +229,7 @@ class PostgresEmployeeRepository(IEmployeeRepository):
         res = self.session.execute(stmt)
         self.session.commit()
 
-class PostgresRegionRepository(IRegionRepository):
-    def __init__(self, session: Session = Depends(get_session)):
-        self.session = session
 
-    async def create(self, name: str, location: str | None) -> dict:
-        from sqlalchemy import select
-        exists_stmt = select(Region).where(Region.name == name)
-        if self.session.execute(exists_stmt).scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Region with this name already exists")
-        obj = Region(name=name, location=location)
-        self.session.add(obj)
-        self.session.commit()
-        self.session.refresh(obj)
-        return {"id": obj.id, "name": obj.name, "location": obj.location}
-
-    async def list(self) -> list[dict]:
-        from sqlalchemy import select
-        rows = self.session.execute(select(Region)).scalars().all()
-        return [{"id": r.id, "name": r.name, "location": r.location} for r in rows]
-
-    async def get(self, region_id: int) -> dict:
-        obj = self.session.get(Region, region_id)
-        if not obj:
-            raise HTTPException(status_code=404, detail="Region not found")
-        return {"id": obj.id, "name": obj.name, "location": obj.location}
-
-    async def update(self, region_id: int, updates: dict) -> dict:
-        from sqlalchemy import update
-        if updates:
-            stmt = update(Region).where(Region.id == region_id).values(**updates)
-            self.session.execute(stmt)
-            self.session.commit()
-        return await self.get(region_id)
-
-    async def delete(self, region_id: int) -> None:
-        from sqlalchemy import delete
-        stmt = delete(Region).where(Region.id == region_id)
-        res = self.session.execute(stmt)
-        self.session.commit()
 
 class PostgresFilterRepository(IFilterRepository):
     def __init__(self, session: Session = Depends(get_session)):
@@ -458,6 +420,56 @@ class PostgresProjectRepository(IProjectRepository):
             end = datetime.fromisoformat(p.end_time) if p.end_time else None
             out.append(ProjectRead(id=p.id, name=p.name, value=p.value, region=p.region, start_time=start, end_time=end))
         return out
+
+class PostgresRegionRepository(IRegionRepository):
+    def __init__(self, session: Session = Depends(get_session)):
+        self.session = session
+
+    async def create(self, name: str, location: str | None) -> dict:
+        from sqlalchemy import select
+        exists_stmt = select(Region).where(Region.name == name)
+        if self.session.execute(exists_stmt).scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Region with this name already exists")
+        obj = Region(name=name, location=location)
+        self.session.add(obj)
+        self.session.commit()
+        self.session.refresh(obj)
+        return {"id": obj.id, "name": obj.name, "location": obj.location}
+
+    async def list(self) -> list[dict]:
+        from sqlalchemy import select
+        rows = self.session.execute(select(Region)).scalars().all()
+        return [{"id": r.id, "name": r.name, "location": r.location} for r in rows]
+
+    async def get(self, region_id: int) -> dict:
+        obj = self.session.get(Region, region_id)
+        if not obj:
+            raise HTTPException(status_code=404, detail="Region not found")
+        return {"id": obj.id, "name": obj.name, "location": obj.location}
+
+    async def update(self, region_id: int, updates: dict) -> dict:
+        from sqlalchemy import update
+        if updates:
+            stmt = update(Region).where(Region.id == region_id).values(**updates)
+            self.session.execute(stmt)
+            self.session.commit()
+        return await self.get(region_id)
+
+    async def delete(self, region_id: int) -> None:
+        from sqlalchemy import delete
+        stmt = delete(Region).where(Region.id == region_id)
+        res = self.session.execute(stmt)
+        self.session.commit()
+
+    async def get_employee_counts(self, region:str, repo: IEmployeeRepository = PostgresEmployeeRepository(session=get_session())) -> int:
+        stmt = select(func.count(Employee.id)).where(Employee.region == region)
+        return self.session.execute(stmt).scalar_one()
+
+
+    async def get_project_counts(self, region: str, repo: IProjectRepository = PostgresProjectRepository(session=get_session())) -> int:
+        stmt = select(func.count(Project.id)).where(Project.region == region)
+        return self.session.execute(stmt).scalar_one()
+        
 
 class PostgresUserRepository(IUserRepository):
     def __init__(self, session: Session = Depends(get_session)):

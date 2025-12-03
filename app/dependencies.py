@@ -33,3 +33,9 @@ def get_fenbao_repo(session:Session = Depends(get_session)) -> IFenBaoRepository
 def get_time_conflict_service(assignment_repo: IEmployeeAssignmentRepository = Depends(get_assignment_repo)) -> TimeConflictService:
     return TimeConflictService(assignment_repo)
 
+def get_region_employee_counts(repo: IRegionRepository = Depends(get_employee_repo)) -> IEmployeeRepository:
+    return repo
+
+def get_region_project_counts(repo: IRegionRepository = Depends(get_project_repo)) -> IProjectRepository:
+    return repo
+
