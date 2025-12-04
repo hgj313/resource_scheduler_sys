@@ -367,7 +367,7 @@ class PostgresProjectRepository(IProjectRepository):
             out.append(ProjectRead(id=r.id, name=r.name, value=r.value, region=r.region, start_time=start, end_time=end))
         return out
 
-    async def add_fenbao(self, project_id: int, fenbao_id: int,assign_staff_counts:int) -> dict[str, str]:
+    async def add_fenbao(self, project_id: int, fenbao_id: int, assign_staff_counts: int | None = None) -> dict[str, str]:
         from sqlalchemy.exc import IntegrityError
         p = self.session.get(Project, project_id)
         if not p:
@@ -375,8 +375,7 @@ class PostgresProjectRepository(IProjectRepository):
         f = self.session.get(FenBao, fenbao_id)
         if not f:
             raise HTTPException(status_code=404, detail="FenBao not found")
-        if f.staff_count < assign_staff_counts:
-            raise HTTPException(status_code=400, detail="FenBao staff count is not enough")
+        # 分包-项目建立合作关系，不涉及人数占用；人数占用由分包团队派遣管理
         try:
             p.fenbaos.append(f)
             self.session.commit()

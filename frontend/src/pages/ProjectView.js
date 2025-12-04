@@ -4,6 +4,7 @@ import Timeline from '../components/Timeline';
 import filterService from '../services/filterService';
 import EmployeePool from '../components/EmployeePool';
 import projectService from '../services/projectService';
+import fenbaoService from '../services/fenbaoService';
 import DispatchViewRatio from '../components/DispatchViewRatio';
 import layoutService from '../services/layoutService';
 import { getCurrentUser } from '../services/authService';
@@ -30,6 +31,9 @@ const ProjectView = () => {
   const [projectName, setProjectName] = useState('');
   const [conflictOpen, setConflictOpen] = useState(false);
   const [conflictInfo, setConflictInfo] = useState(null);
+  const [fenbaoTeams, setFenbaoTeams] = useState([]);
+  const [fenbaos, setFenbaos] = useState([]);
+  const [teamForm, setTeamForm] = useState({ belong_to_fenbao_id: '', leader_name: '', company_name: '', team_number: '', start_time: '', end_time: '' });
 
   // 恢复并持久化副时间轴刻度（确保在组件内部调用hooks）
   useEffect(() => {
@@ -57,6 +61,19 @@ const ProjectView = () => {
       }
     };
     fetchProjectName();
+  }, [projectId]);
+
+  // 加载分包与分包团队
+  useEffect(() => {
+    const fetchFenbaoData = async () => {
+      try {
+        const [fbResp, teamResp] = await Promise.all([fenbaoService.getAll(), fenbaoService.listTeams()]);
+        setFenbaos(fbResp.data || []);
+        const list = (teamResp.data || []).filter((t) => t.project_at_id === Number(projectId));
+        setFenbaoTeams(list);
+      } catch {}
+    };
+    fetchFenbaoData();
   }, [projectId]);
 
   // 初次进入页面或派遣后，拉取后端员工布局参数
@@ -127,6 +144,92 @@ const ProjectView = () => {
             <DispatchViewRatio entries={assignmentsRatio} unitLengthPx={unitLengthPx} />
           )}
         </ScrollableLayout>
+      </div>
+
+      <div className="card">
+        <h3>分包团队</h3>
+        <div style={{ marginBottom: 12 }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>负责人</th>
+                <th>公司</th>
+                <th>人数</th>
+                <th>分包</th>
+                <th>起始</th>
+                <th>结束</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fenbaoTeams.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.leader_name || '-'}</td>
+                  <td>{t.company_name}</td>
+                  <td>{t.team_number}</td>
+                  <td>{(fenbaos.find((f) => f.id === t.belong_to_fenbao_id)?.name) || t.belong_to_fenbao_id}</td>
+                  <td>{t.start_time ? new Date(t.start_time).toLocaleString() : '-'}</td>
+                  <td>{t.end_time ? new Date(t.end_time).toLocaleString() : '-'}</td>
+                  <td>{t.status}</td>
+                  <td>
+                    {t.status !== 'completed' && (
+                      <button className="btn" onClick={async () => {
+                        await fenbaoService.completeTeam(t.id);
+                        const teamResp = await fenbaoService.listTeams();
+                        setFenbaoTeams((teamResp.data || []).filter((x) => x.project_at_id === Number(projectId)));
+                        const fbResp = await fenbaoService.getAll();
+                        setFenbaos(fbResp.data || []);
+                      }}>完成</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <h4>派遣分包团队到本项目</h4>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="form-group">
+            <label>分包</label>
+            <select value={teamForm.belong_to_fenbao_id} onChange={(e) => setTeamForm((s) => ({ ...s, belong_to_fenbao_id: e.target.value }))}>
+              <option value="">请选择</option>
+              {fenbaos.map((f) => (
+                <option key={f.id} value={f.id}>{`${f.id} - ${f.name}（可用：${f.available_staff_count ?? '-'}）`}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group"><label>负责人</label><input value={teamForm.leader_name} onChange={(e) => setTeamForm((s) => ({ ...s, leader_name: e.target.value }))} /></div>
+          <div className="form-group"><label>公司</label><input value={teamForm.company_name} onChange={(e) => setTeamForm((s) => ({ ...s, company_name: e.target.value }))} /></div>
+          <div className="form-group"><label>人数</label><input type="number" min="1" value={teamForm.team_number} onChange={(e) => setTeamForm((s) => ({ ...s, team_number: e.target.value }))} /></div>
+          <div className="form-group"><label>开始时间</label><input type="datetime-local" value={teamForm.start_time} onChange={(e) => setTeamForm((s) => ({ ...s, start_time: e.target.value }))} /></div>
+          <div className="form-group"><label>结束时间</label><input type="datetime-local" value={teamForm.end_time} onChange={(e) => setTeamForm((s) => ({ ...s, end_time: e.target.value }))} /></div>
+        </div>
+        <div style={{ textAlign:'right', marginTop:12 }}>
+          <button className="btn btn-primary" onClick={async () => {
+            const fbId = Number(teamForm.belong_to_fenbao_id);
+            const num = Number(teamForm.team_number);
+            if (!fbId || !num || !teamForm.start_time || !teamForm.end_time) return;
+            const payload = {
+              belong_to_fenbao_id: fbId,
+              leader_name: teamForm.leader_name || null,
+              company_name: teamForm.company_name,
+              team_number: num,
+              project_at_id: Number(projectId),
+              start_time: new Date(teamForm.start_time).toISOString(),
+              end_time: new Date(teamForm.end_time).toISOString(),
+              level: null,
+              status: 'assigned',
+            };
+            await fenbaoService.createTeam(payload);
+            const teamResp = await fenbaoService.listTeams();
+            setFenbaoTeams((teamResp.data || []).filter((x) => x.project_at_id === Number(projectId)));
+            const fbResp = await fenbaoService.getAll();
+            setFenbaos(fbResp.data || []);
+            setTeamForm({ belong_to_fenbao_id: '', leader_name: '', company_name: '', team_number: '', start_time: '', end_time: '' });
+          }}>派遣</button>
+        </div>
       </div>
 
       {showModal && (

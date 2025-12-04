@@ -52,46 +52,45 @@ class TimeConflictService:
             return _dt.fromisoformat(v) if isinstance(v, str) else v
 
         if session is not None:
-            with session.begin():
-                for conflict in conflict_list:
-                    session.execute(
-                        select(EmployeeAssignment)
-                        .where(EmployeeAssignment.id == conflict["id"]) 
-                        .with_for_update()
-                    )
-                    current = await self.assign_repo.read_by_id(conflict["id"])
-                    cs = conflict["conflict_start"]
-                    ce = conflict["conflict_end"]
-                    s = _to_dt(current.start_time)
-                    e = _to_dt(current.end_time)
-                    if s >= cs and e >= ce:
-                        await self.assign_repo.update(conflict["id"], AssignmentUpdate(
-                            employee_id=current.employee_id,
-                            project_id=current.project_id,
-                            start_time=ce,
-                            end_time=e,
-                        ))
-                    elif s <= cs and e <= ce:
-                        await self.assign_repo.update(conflict["id"], AssignmentUpdate(
-                            employee_id=current.employee_id,
-                            project_id=current.project_id,
-                            start_time=s,
-                            end_time=cs,
-                        ))
-                    elif s <= cs and e >= ce:
-                        # 左段保留到 cs，右段新建从 ce 到原 e
-                        await self.assign_repo.update(conflict["id"], AssignmentUpdate(
-                            employee_id=current.employee_id,
-                            project_id=current.project_id,
-                            start_time=s,
-                            end_time=cs,
-                        ))
-                        await self.assign_repo.create(ProjectAssignCreate(
-                            employee_id=employee_id,
-                            project_id=current.project_id,
-                            start_time=ce,
-                            end_time=e,
-                        ))
+            for conflict in conflict_list:
+                current = await self.assign_repo.read_by_id(conflict["id"])
+                cs = conflict["conflict_start"]
+                ce = conflict["conflict_end"]
+                s = _to_dt(current.start_time)
+                e = _to_dt(current.end_time)
+                if s >= cs and e >= ce:
+                    await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
+                        employee_id=current.employee_id,
+                        project_id=current.project_id,
+                        start_time=ce,
+                        end_time=e,
+                    ))
+                elif s <= cs and e <= ce:
+                    await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
+                        employee_id=current.employee_id,
+                        project_id=current.project_id,
+                        start_time=s,
+                        end_time=cs,
+                    ))
+                elif s <= cs and e >= ce:
+                    await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
+                        employee_id=current.employee_id,
+                        project_id=current.project_id,
+                        start_time=s,
+                        end_time=cs,
+                    ))
+                    await self.assign_repo.create(ProjectAssignCreate(
+                        employee_id=employee_id,
+                        project_id=current.project_id,
+                        start_time=ce,
+                        end_time=e,
+                    ))
         else:
             # 无 session 时退化为非锁定更新
             for conflict in conflict_list:
@@ -102,6 +101,8 @@ class TimeConflictService:
                 e = _to_dt(current.end_time)
                 if s >= cs and e >= ce:
                     await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
                         employee_id=current.employee_id,
                         project_id=current.project_id,
                         start_time=ce,
@@ -109,6 +110,8 @@ class TimeConflictService:
                     ))
                 elif s <= cs and e <= ce:
                     await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
                         employee_id=current.employee_id,
                         project_id=current.project_id,
                         start_time=s,
@@ -116,15 +119,18 @@ class TimeConflictService:
                     ))
                 elif s <= cs and e >= ce:
                     await self.assign_repo.update(conflict["id"], AssignmentUpdate(
+                        id=conflict["id"],
+                        employee_name=current.employee_name if hasattr(current, "employee_name") else None,
                         employee_id=current.employee_id,
                         project_id=current.project_id,
                         start_time=s,
                         end_time=cs,
                     ))
-                    await self.assign_repo.create(EmployeeAssignmentCreate(
+                    new_payload = ProjectAssignCreate(
                         employee_id=employee_id,
                         project_id=current.project_id,
                         start_time=ce,
                         end_time=e,
-                    ))
+                    )
+                    await self.assign_repo.create(new_payload)
                     

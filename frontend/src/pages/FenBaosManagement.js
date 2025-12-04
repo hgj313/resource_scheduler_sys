@@ -5,7 +5,7 @@ import fenbaoService from '../services/fenbaoService';
 const FenBaosManagement = () => {
   const navigate = useNavigate();
   const [createForm, setCreateForm] = useState({ name:'', professional:'', staff_count:'', level:'' });
-  const [updateForm, setUpdateForm] = useState({ name:'', professional:'', staff_count:'', level:'' });
+  const [updateForm, setUpdateForm] = useState({ name:'', professional:'', staff_count:'', available_staff_count:'', level:'' });
   const [fenbaos, setFenbaos] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [deleteId, setDeleteId] = useState('');
@@ -53,6 +53,7 @@ const FenBaosManagement = () => {
         name: updateForm.name || undefined,
         professional: updateForm.professional || undefined,
         staff_count: updateForm.staff_count ? Number(updateForm.staff_count) : undefined,
+        available_staff_count: updateForm.available_staff_count ? Number(updateForm.available_staff_count) : undefined,
         level: updateForm.level || undefined,
       };
       await fenbaoService.update(Number(selectedId), payload);
@@ -112,6 +113,7 @@ const FenBaosManagement = () => {
               <div className="form-group"><label>名称</label><input name="name" value={updateForm.name} onChange={onChangeUpdate} /></div>
               <div className="form-group"><label>专业</label><input name="professional" value={updateForm.professional} onChange={onChangeUpdate} /></div>
               <div className="form-group"><label>人数</label><input name="staff_count" value={updateForm.staff_count} onChange={onChangeUpdate} /></div>
+              <div className="form-group"><label>可用人数</label><input name="available_staff_count" value={updateForm.available_staff_count} onChange={onChangeUpdate} /></div>
               <div className="form-group"><label>等级</label><input name="level" value={updateForm.level} onChange={onChangeUpdate} /></div>
               <button className="btn btn-primary" type="submit">提交更新</button>
             </form>

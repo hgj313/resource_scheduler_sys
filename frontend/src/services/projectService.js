@@ -12,13 +12,19 @@ const projectService = {
   // 删除项目
   delete: (id) => api.delete(`/projects/${id}`),
   // 为项目指派员工（拖拽或勾选后选择时间段）
-  assignEmployee: (projectId, employeeId, start, end, userEmail) =>
-    api.post(`/projects/${projectId}/assignments`, {
-      employee_id: employeeId,
-      start_time: start,
-      end_time: end,
-      user_email: userEmail,
-    }),
+  assignEmployee: (projectId, employeeId, start, end, userEmail, overwrite = false) =>
+    api.post(
+      `/projects/${projectId}/assignments`,
+      {
+        employee_id: employeeId,
+        start_time: start,
+        end_time: end,
+        user_email: userEmail,
+      },
+      { params: { overwrite } }
+    ),
+  // 项目-分包团队列表
+  listFenbaoTeams: (projectId) => api.get(`/projects/${projectId}/fenbao_teams`),
   assignFenbao: (projectId, fenbaoId) =>
     api.post(`/projects/${projectId}/fenbao`, null, { params: { fenbao_id: fenbaoId } }),
   removeFenbao: (projectId, fenbaoId) =>

@@ -48,6 +48,10 @@ const RegionView = () => {
   const [assignEnd, setAssignEnd] = useState('');
   const [conflictOpen, setConflictOpen] = useState(false);
   const [conflictInfo, setConflictInfo] = useState(null);
+  const [projectTeamsById, setProjectTeamsById] = useState({});
+  const [fenbaoTeamModalOpen, setFenbaoTeamModalOpen] = useState(false);
+  const [fenbaoAssignTarget, setFenbaoAssignTarget] = useState({ projectId: null, fenbaoId: null, fenbaoName: '' });
+  const [fenbaoTeamForm, setFenbaoTeamForm] = useState({ leader_name: '', company_name: '', team_number: '', start_time: '', end_time: '' });
 
   // 读取并持久化时间轴刻度（必须在组件内部调用hooks）
   useEffect(() => {
@@ -114,7 +118,7 @@ const RegionView = () => {
     const loadFenbaos = async () => {
       try {
         const resp = await fenbaoService.getAll();
-        const list = (resp.data || []).map((f) => ({ id: f.id, name: f.name, professional: f.professional, staff_count: f.staff_count, level: f.level }));
+        const list = (resp.data || []).map((f) => ({ id: f.id, name: f.name, professional: f.professional, staff_count: f.staff_count, available_staff_count: f.available_staff_count, level: f.level }));
         setFenbaos(list);
       } catch (err) {
         // ignore
@@ -247,7 +251,7 @@ const RegionView = () => {
                   <strong>{f.name}</strong>
                   <span>等级：{f.level}</span>
                 </div>
-                <div>专业：{f.professional}；人数：{f.staff_count}</div>
+                <div>专业：{f.professional}；人数：{f.staff_count}；可用：{f.available_staff_count ?? '-'}</div>
               </div>
             ))}
           </div>
@@ -277,7 +281,9 @@ const RegionView = () => {
                   setAssignModalOpen(true);
                 } else if (payload?.type === 'fenbao') {
                   try {
-                    await projectService.assignFenbao(pid, payload.id);
+                    setFenbaoAssignTarget({ projectId: pid, fenbaoId: payload.id, fenbaoName: payload.name });
+                    setFenbaoTeamForm({ leader_name: '', company_name: '', team_number: '', start_time: '', end_time: '' });
+                    setFenbaoTeamModalOpen(true);
                   } catch {}
                 }
               }}
@@ -325,6 +331,63 @@ const RegionView = () => {
         </Modal>
       )}
 
+      {fenbaoTeamModalOpen && (
+        <Modal
+          title={`派遣分包团队：${fenbaoAssignTarget.fenbaoName} → 项目 ${fenbaoAssignTarget.projectId}`}
+          onClose={() => setFenbaoTeamModalOpen(false)}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div className="form-group"><label>负责人</label><input value={fenbaoTeamForm.leader_name} onChange={(e) => setFenbaoTeamForm((s) => ({ ...s, leader_name: e.target.value }))} /></div>
+            <div className="form-group"><label>公司</label><input value={fenbaoTeamForm.company_name} onChange={(e) => setFenbaoTeamForm((s) => ({ ...s, company_name: e.target.value }))} /></div>
+            <div className="form-group"><label>人数</label><input type="number" min="1" value={fenbaoTeamForm.team_number} onChange={(e) => setFenbaoTeamForm((s) => ({ ...s, team_number: e.target.value }))} /></div>
+            <div className="form-group"><label>开始时间</label><input type="datetime-local" value={fenbaoTeamForm.start_time} onChange={(e) => setFenbaoTeamForm((s) => ({ ...s, start_time: e.target.value }))} /></div>
+            <div className="form-group"><label>结束时间</label><input type="datetime-local" value={fenbaoTeamForm.end_time} onChange={(e) => setFenbaoTeamForm((s) => ({ ...s, end_time: e.target.value }))} /></div>
+          </div>
+          <div style={{ textAlign: 'right', marginTop: 12 }}>
+            <button className="btn" onClick={() => setFenbaoTeamModalOpen(false)}>取消</button>
+            <button
+              className="btn btn-primary"
+              style={{ marginLeft: 8 }}
+              onClick={async () => {
+                const pid = fenbaoAssignTarget.projectId;
+                const fid = fenbaoAssignTarget.fenbaoId;
+                const num = Number(fenbaoTeamForm.team_number);
+                if (!pid || !fid || !num || !fenbaoTeamForm.start_time || !fenbaoTeamForm.end_time) return;
+                const payload = {
+                  belong_to_fenbao_id: fid,
+                  leader_name: fenbaoTeamForm.leader_name || null,
+                  company_name: fenbaoTeamForm.company_name,
+                  team_number: num,
+                  project_at_id: pid,
+                  start_time: new Date(fenbaoTeamForm.start_time).toISOString(),
+                  end_time: new Date(fenbaoTeamForm.end_time).toISOString(),
+                  level: null,
+                  status: 'assigned',
+                };
+                try {
+                  await fenbaoService.createTeam(payload);
+                  await projectService.assignFenbao(pid, fid);
+                  try {
+                    const teamResp = await projectService.listFenbaoTeams(pid);
+                    setProjectTeamsById((m) => ({ ...m, [pid]: teamResp.data || [] }));
+                  } catch {}
+                  try {
+                    const fbResp = await fenbaoService.getAll();
+                    const list = (fbResp.data || []).map((f) => ({ id: f.id, name: f.name, professional: f.professional, staff_count: f.staff_count, available_staff_count: f.available_staff_count, level: f.level }));
+                    setFenbaos(list);
+                  } catch {}
+                  setFenbaoTeamModalOpen(false);
+                  setFenbaoAssignTarget({ projectId: null, fenbaoId: null, fenbaoName: '' });
+                  setFenbaoTeamForm({ leader_name: '', company_name: '', team_number: '', start_time: '', end_time: '' });
+                } catch {}
+              }}
+            >
+              确定派遣
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {conflictOpen && (
         <Modal
           title={conflictInfo?.message || '派遣时间冲突'}
@@ -346,7 +409,24 @@ const RegionView = () => {
             ))}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <button className="btn" onClick={() => setConflictOpen(false)}>关闭</button>
+            <button className="btn" onClick={() => setConflictOpen(false)}>不覆盖</button>
+            <button
+              className="btn btn-primary"
+              style={{ marginLeft: 8 }}
+              onClick={async () => {
+                try {
+                  const currentUser = await getCurrentUser();
+                  const userEmail = currentUser ? currentUser.user_email : '';
+                  const s = new Date(assignStart).toISOString();
+                  const e = new Date(assignEnd).toISOString();
+                  await projectService.assignEmployee(assignTarget.projectId, assignTarget.employee.id, s, e, userEmail, true);
+                  setConflictOpen(false);
+                  setAssignModalOpen(false);
+                } catch {}
+              }}
+            >
+              覆盖并继续派遣
+            </button>
           </div>
         </Modal>
       )}

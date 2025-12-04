@@ -33,6 +33,7 @@ const FenBaos = () => {
             <th>名称</th>
             <th>专业</th>
             <th>人数</th>
+            <th>可用人数</th>
             <th>等级</th>
           </tr>
         </thead>
@@ -43,6 +44,7 @@ const FenBaos = () => {
               <td>{f.name}</td>
               <td>{f.professional}</td>
               <td>{f.staff_count}</td>
+              <td>{f.available_staff_count ?? '-'}</td>
               <td>{f.level}</td>
             </tr>
           ))}
