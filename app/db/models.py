@@ -70,5 +70,19 @@ class FenBao(Base):
     name = Column(String,nullable=False)
     professional = Column(String,nullable=False)
     staff_count = Column(Integer,nullable=False)
+    available_staff_count = Column(Integer,nullable=True)
     level = Column(String,nullable=False)
     projects = relationship("Project", secondary=fenbao_projects, back_populates="fenbaos")
+
+class FenBaoTeam(Base):
+    __tablename__ = "fenbao_teams"
+    id = Column(Integer,primary_key=True,autoincrement=True)
+    leader_name = Column(String,nullable=True)
+    company_name = Column(String,nullable=False)
+    team_number = Column(Integer,nullable=False)
+    project_at_id = Column(Integer,ForeignKey("projects.id"),nullable=False)
+    start_time = Column(String,nullable=False)
+    end_time = Column(String,nullable=True)
+    level = Column(String,nullable=True)
+    belong_to_fenbao_id = Column(Integer,ForeignKey("fenbaos.id"),nullable=False)
+    status = Column(String, nullable=False, default="assigned")

@@ -3,10 +3,11 @@ from app.repositories.interfaces  import IEmployeeAssignmentRepository
 from app.repositories.postgresql_repo import PostgresEmployeeAssignmentRepository
 from app.repositories.interfaces  import IEmployeeRepository
 from app.repositories.postgresql_repo import PostgresEmployeeRepository, PostgresRegionRepository, PostgresFilterRepository, PostgresProjectRepository, PostgresUserRepository,PostgresFenBaoRepository
-from app.repositories.interfaces  import IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository,IFenBaoRepository
+from app.repositories.interfaces  import IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository,IFenBaoRepository,IFenBaoTeamRepository
 from app.service_repo.time_conflict_service import TimeConflictService
 from app.db.session import get_session
 from sqlalchemy.orm import Session
+from app.services.fenbao_sch import PostgresFenBaoTeamRepository
 from app.core.config import settings
 
 def get_assignment_repo(session: Session = Depends(get_session))->IEmployeeAssignmentRepository:
@@ -38,4 +39,9 @@ def get_region_employee_counts(repo: IRegionRepository = Depends(get_employee_re
 
 def get_region_project_counts(repo: IRegionRepository = Depends(get_project_repo)) -> IProjectRepository:
     return repo
+def get_fenbao_team_repo(
+    session: Session = Depends(get_session),
+    fenbao_repo: IFenBaoRepository = Depends(get_fenbao_repo)
+) -> IFenBaoTeamRepository:
+    return PostgresFenBaoTeamRepository(session=session, fb_repo=fenbao_repo)
 

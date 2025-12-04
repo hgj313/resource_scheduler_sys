@@ -4,15 +4,15 @@ from datetime import datetime
 from sqlalchemy import select, update, delete, func
 from fastapi import Depends, HTTPException
 from app.db.session import get_session
-from app.db.models import EmployeeAssignment, Employee, Project, Region, User, FenBao
-from .interfaces import IEmployeeAssignmentRepository, IEmployeeRepository, IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository,IFenBaoRepository
+from app.db.models import EmployeeAssignment, Employee, Project, Region, User, FenBao, FenBaoTeam
+from .interfaces import IEmployeeAssignmentRepository, IEmployeeRepository, IRegionRepository, IFilterRepository, IProjectRepository, IUserRepository,IFenBaoRepository,IFenBaoTeamRepository
 from app.schemas import ProjectRead
 from app.schemas.employee import EmployeeAssign
 from app.services.timeline import NewTimeDelta, project_in_main_timeline, employee_available_in_secondary
 from app.schemas.project import ProjectAssignCreate
 from app.schemas.employee import EmployeeRead, EmployeeCreate, EmployeeUpdate
 from app.schemas.assignment import AssignmentRead, AssignmentUpdate
-from app.schemas.fenbaos import FenBaoRead, FenBaoCreate, FenBaoUpdate
+from app.schemas.fenbaos import FenBaoRead, FenBaoCreate, FenBaoUpdate,FenbaoTeam,FenbaoTeamRead,FenbaoTeamUpdate
 from typing import List
 
 class PostgresEmployeeAssignmentRepository(IEmployeeAssignmentRepository):
@@ -367,7 +367,7 @@ class PostgresProjectRepository(IProjectRepository):
             out.append(ProjectRead(id=r.id, name=r.name, value=r.value, region=r.region, start_time=start, end_time=end))
         return out
 
-    async def add_fenbao(self, project_id: int, fenbao_id: int) -> dict[str, str]:
+    async def add_fenbao(self, project_id: int, fenbao_id: int,assign_staff_counts:int) -> dict[str, str]:
         from sqlalchemy.exc import IntegrityError
         p = self.session.get(Project, project_id)
         if not p:
@@ -375,6 +375,8 @@ class PostgresProjectRepository(IProjectRepository):
         f = self.session.get(FenBao, fenbao_id)
         if not f:
             raise HTTPException(status_code=404, detail="FenBao not found")
+        if f.staff_count < assign_staff_counts:
+            raise HTTPException(status_code=400, detail="FenBao staff count is not enough")
         try:
             p.fenbaos.append(f)
             self.session.commit()
@@ -461,9 +463,22 @@ class PostgresRegionRepository(IRegionRepository):
         res = self.session.execute(stmt)
         self.session.commit()
 
-    async def get_employee_counts(self, region:str, repo: IEmployeeRepository = PostgresEmployeeRepository(session=get_session())) -> int:
+    async def get_employee_counts(self, region:str, repo: IEmployeeRepository = PostgresEmployeeRepository(session=get_session())) -> dict:
         stmt = select(func.count(Employee.id)).where(Employee.region == region)
-        return self.session.execute(stmt).scalar_one()
+        stmt2 = select(func.count(Employee.id)).where(Employee.region == region,Employee.position == "项目经理")
+        stmt3 = select(func.count(Employee.id)).where(Employee.region == region,Employee.position == "硬景工程师")
+        stmt4 = select(func.count(Employee.id)).where(Employee.region == region,Employee.position == "软景工程师")
+        total_employees = self.session.execute(stmt).scalar_one()
+        pm_count = self.session.execute(stmt2).scalar_one()
+        hardscape_engineer_count = self.session.execute(stmt3).scalar_one()
+        softscape_engineer_count = self.session.execute(stmt4).scalar_one()
+        return {
+            "total_employees": total_employees,
+            "pm_count": pm_count,
+            "hardscape_engineer_count": hardscape_engineer_count,
+            "softscape_engineer_count": softscape_engineer_count,
+        }
+
 
 
     async def get_project_counts(self, region: str, repo: IProjectRepository = PostgresProjectRepository(session=get_session())) -> int:
@@ -582,6 +597,7 @@ class PostgresFenBaoRepository(IFenBaoRepository):
         if f:
             raise HTTPException(status_code=400,detail="FenBao name already exists")
         f = FenBao(**fenbao.model_dump())
+        f.available_staff_count = fenbao.staff_count
         self.session.add(f)
         self.session.commit()
         return {"message":"FenBao created successfully"}
@@ -633,6 +649,8 @@ class PostgresFenBaoRepository(IFenBaoRepository):
             values["professional"] = fenbao.professional
         if fenbao.staff_count is not None:
             values["staff_count"] = fenbao.staff_count
+        if fenbao.available_staff_count is not None:
+            values["available_staff_count"] = fenbao.available_staff_count
         if fenbao.level is not None:
             values["level"] = fenbao.level
         if values:

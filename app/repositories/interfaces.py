@@ -3,7 +3,7 @@ from abc import ABC,abstractmethod
 from app.schemas.project import ProjectAssignCreate
 from app.schemas.assignment import AssignmentRead,AssignmentUpdate
 from app.schemas.employee import EmployeeRead,EmployeeCreate,EmployeeUpdate
-from app.schemas.fenbaos import FenBaoRead,FenBaoCreate,FenBaoUpdate
+from app.schemas.fenbaos import FenBaoRead,FenBaoCreate,FenBaoUpdate,FenbaoTeam,FenbaoTeamRead,FenbaoTeamUpdate
 from app.schemas import ProjectRead
 from app.schemas.employee import EmployeeAssign
 from app.services.timeline import NewTimeDelta
@@ -185,5 +185,39 @@ class IFenBaoRepository(ABC):
     @abstractmethod
     async def delete(self,fenbao_id:int)->None:
         """删除一个分包"""
+        pass
+
+class IFenBaoTeamRepository(ABC):
+    @abstractmethod
+    async def assign_team(self,team:FenbaoTeam)->dict:
+        """创建一个新的分包"""
+        pass
+    @abstractmethod
+    async def read_by_id(self,team_id:int)->FenbaoTeamRead:
+        """根据分包团队ID读取团队信息"""
+        pass
+    @abstractmethod
+    async def read_by_name(self,name:str)->FenbaoTeamRead:
+        """根据分包名称读取分包团队信息"""
+        pass
+    @abstractmethod
+    async def read_all(self)->List[FenbaoTeamRead]:
+        """列出所有分包团队"""
+        pass
+    @abstractmethod
+    async def read_by_project_id(self, project_id:int)->List[FenbaoTeamRead]:
+        """根据项目ID列出分包团队"""
+        pass
+    @abstractmethod
+    async def update(self,team_id:int,team:FenbaoTeamUpdate)->FenbaoTeamRead:
+        """更新一个分包团队"""
+        pass
+    @abstractmethod
+    async def delete(self,team_id:int)->None:
+        """删除一个分包团队"""
+        pass
+    @abstractmethod
+    async def complete(self, team_id: int) -> dict:
+        """完成团队派遣并恢复分包可用人数"""
         pass
 

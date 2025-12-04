@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from app.service_repo.time_conflict_service import TimeConflictService
 
 class TimeConflictError(Exception):
     def __init__(self, conflict:list[dict]):

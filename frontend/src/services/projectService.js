@@ -19,6 +19,10 @@ const projectService = {
       end_time: end,
       user_email: userEmail,
     }),
+  assignFenbao: (projectId, fenbaoId) =>
+    api.post(`/projects/${projectId}/fenbao`, null, { params: { fenbao_id: fenbaoId } }),
+  removeFenbao: (projectId, fenbaoId) =>
+    api.delete(`/projects/${projectId}/fenbao`, { params: { fenbao_id: fenbaoId } }),
 };
 
 export default projectService;

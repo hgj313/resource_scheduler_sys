@@ -11,3 +11,11 @@
 .region-card--normal { transform: scale(0.9); }
 .region-card--hovered { transform: scale(1.08); box-shadow: 0 6px 12px rgba(0,0,0,0.12); }
 .region-card__name { font-weight: 600; color: #333; text-align: center; }
+.region-card__stats {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #555;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}

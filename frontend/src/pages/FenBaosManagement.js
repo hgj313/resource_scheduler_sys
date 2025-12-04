@@ -131,15 +131,8 @@ const FenBaosManagement = () => {
           </div>
 
           <div>
-            <h3>分包列表</h3>
-            <div className="card">
-              {(fenbaos || []).map((f) => (
-                <div key={f.id} style={{ padding: 8, borderBottom: '1px solid #eee' }}>
-                  <strong>{f.name}</strong>
-                  <div>专业：{f.professional}；人数：{f.staff_count}；等级：{f.level}</div>
-                </div>
-              ))}
-            </div>
+            <h3>查看分包列表</h3>
+            <button className="btn" onClick={() => navigate('/fenbaos')}>分包列表页</button>
           </div>
         </div>
       </div>
@@ -148,4 +141,3 @@ const FenBaosManagement = () => {
 };
 
 export default FenBaosManagement;
-

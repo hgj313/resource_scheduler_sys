@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegionCard from '../components/RegionCard';
+import regionService from '../services/regionService';
 import NotificationManager from '../components/NotificationManager';
 import '../styles/main.css';
 import { getCurrentUser, isAuthenticated, logout } from '../services/authService';
@@ -15,6 +16,7 @@ const REGIONS = [
 const MainPage = () => {
   const navigate = useNavigate();
   const [hoveredId, setHoveredId] = useState(null);
+  const [regionStats, setRegionStats] = useState({});
   const authed = isAuthenticated();
   const user = getCurrentUser();
 
@@ -27,6 +29,28 @@ const MainPage = () => {
     logout();
     navigate('/login');
   };
+
+  React.useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const entries = await Promise.all(
+          REGIONS.map(async (r) => {
+            const [empResp, projResp] = await Promise.all([
+              regionService.getEmployeeStats(r.name),
+              regionService.getProjectCount(r.name),
+            ]);
+            return [r.id, {
+              employees: empResp.data || {},
+              projects: projResp.data ?? 0,
+            }];
+          })
+        );
+        const obj = Object.fromEntries(entries);
+        setRegionStats(obj);
+      } catch {}
+    };
+    loadStats();
+  }, []);
 
   return (
     <>
@@ -60,7 +84,7 @@ const MainPage = () => {
 
           <div className="panel-row split">
             <button className="panel-button btn" onClick={() => navigate('/manage-fenbaos')}>分包管理</button>
-            <button className="panel-button btn" onClick={() => navigate('/employees')}>员工列表</button>
+            <button className="panel-button btn" onClick={() => navigate('/fenbaos')}>分包列表</button>
           </div>
 
           <div className="panel-row split">
@@ -86,6 +110,7 @@ const MainPage = () => {
               onMouseEnter={() => setHoveredId(r.id)}
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => navigate(`/region/${r.id}`)}
+              stats={regionStats[r.id]}
             />
           ))}
         </div>

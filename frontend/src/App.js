@@ -6,6 +6,7 @@ import Footer from './components/common/Footer';
 import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import Projects from './pages/Projects';
+import FenBaos from './pages/FenBaos';
 import CreateEmployee from './pages/CreateEmployee';
 import CreateProject from './pages/CreateProject';
 import EmployeesManagement from './pages/EmployeesManagement';
@@ -44,6 +45,7 @@ function App() {
             {/* 保留原有仪表盘入口 */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/employees" element={<Employees />} />
+            <Route path="/fenbaos" element={<FenBaos />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/create-employee" element={<RequireAuth><CreateEmployee /></RequireAuth>} />
             <Route path="/create-project" element={<RequireAuth><CreateProject /></RequireAuth>} />

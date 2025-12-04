@@ -36,6 +36,7 @@ const RegionView = () => {
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [fenbaos, setFenbaos] = useState([]);
+  const [activePool, setActivePool] = useState('employee');
   const [regionLayoutEntries, setRegionLayoutEntries] = useState([]);
   const [zoom, setZoom] = useState(1);
   const [mainStartISO, setMainStartISO] = useState('');
@@ -187,57 +188,70 @@ const RegionView = () => {
       </div>
 
       <div className="card">
-        <div className="employee-pool-header">
-          <div>员工池：可用 {employees.length} 人</div>
-          <div className="employee-pool-controls">
-            <label>
-              <input
-                type="checkbox"
-                checked={enableEmployeeRegionFilter}
-                onChange={(e) => setEnableEmployeeRegionFilter(e.target.checked)}
-              />
-              启用员工区域过滤
-            </label>
-            <select
-              disabled={!enableEmployeeRegionFilter}
-              value={filterRegion}
-              onChange={(e) => setFilterRegion(e.target.value)}
-            >
-              <option value="西南区域">西南区域</option>
-              <option value="华中区域">华中区域</option>
-              <option value="华南区域">华南区域</option>
-              <option value="华东区域">华东区域</option>
-            </select>
+        <div className="employee-pool-header" style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', gap:8 }}>
+            <button className={`btn ${activePool==='employee'?'btn-primary':''}`} onClick={() => setActivePool('employee')}>员工池</button>
+            <button className={`btn ${activePool==='fenbao'?'btn-primary':''}`} onClick={() => setActivePool('fenbao')}>分包池</button>
           </div>
-        </div>
-        <EmployeePool
-          employees={employees}
-          checkboxEnabled={false}
-          draggable={true}
-          onDragStart={(e, emp) => {
-            try {
-              e.dataTransfer.setData('application/json', JSON.stringify({ id: emp.id, name: emp.name }));
-              e.dataTransfer.effectAllowed = 'copy';
-            } catch {}
-          }}
-        />
-      </div>
-
-      <div className="card">
-        <div className="employee-pool-header">
-          <div>分包列表：共 {fenbaos.length} 个</div>
-        </div>
-        <div style={{ display:'grid', gap:8 }}>
-          {(fenbaos || []).map((f) => (
-            <div key={f.id} className="card" style={{ padding:8 }}>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <strong>{f.name}</strong>
-                <span>等级：{f.level}</span>
-              </div>
-              <div>专业：{f.professional}；人数：{f.staff_count}</div>
+          {activePool==='employee' && (
+            <div className="employee-pool-controls">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={enableEmployeeRegionFilter}
+                  onChange={(e) => setEnableEmployeeRegionFilter(e.target.checked)}
+                />
+                启用员工区域过滤
+              </label>
+              <select
+                disabled={!enableEmployeeRegionFilter}
+                value={filterRegion}
+                onChange={(e) => setFilterRegion(e.target.value)}
+              >
+                <option value="西南区域">西南区域</option>
+                <option value="华中区域">华中区域</option>
+                <option value="华南区域">华南区域</option>
+                <option value="华东区域">华东区域</option>
+              </select>
             </div>
-          ))}
+          )}
         </div>
+        {activePool==='employee' ? (
+          <EmployeePool
+            employees={employees}
+            checkboxEnabled={false}
+            draggable={true}
+            onDragStart={(e, emp) => {
+              try {
+                e.dataTransfer.setData('application/json', JSON.stringify({ type:'employee', id: emp.id, name: emp.name }));
+                e.dataTransfer.effectAllowed = 'copy';
+              } catch {}
+            }}
+          />
+        ) : (
+          <div style={{ display:'grid', gap:8 }}>
+            {(fenbaos || []).map((f) => (
+              <div
+                key={f.id}
+                className="card"
+                style={{ padding:8 }}
+                draggable
+                onDragStart={(e) => {
+                  try {
+                    e.dataTransfer.setData('application/json', JSON.stringify({ type:'fenbao', id: f.id, name: f.name }));
+                    e.dataTransfer.effectAllowed = 'copy';
+                  } catch {}
+                }}
+              >
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <strong>{f.name}</strong>
+                  <span>等级：{f.level}</span>
+                </div>
+                <div>专业：{f.professional}；人数：{f.staff_count}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -255,11 +269,17 @@ const RegionView = () => {
               unitLengthPx={unitLengthPx}
               projectsById={Object.fromEntries(projects.map((p) => [p.id, p]))}
               onOpenProject={(pid) => navigate(`/project/${pid}`)}
-              onDropAssign={(pid, emp) => {
-                setAssignTarget({ projectId: pid, employee: emp });
-                setAssignStart('');
-                setAssignEnd('');
-                setAssignModalOpen(true);
+              onDropAssign={async (pid, payload) => {
+                if (payload?.type === 'employee') {
+                  setAssignTarget({ projectId: pid, employee: { id: payload.id, name: payload.name } });
+                  setAssignStart('');
+                  setAssignEnd('');
+                  setAssignModalOpen(true);
+                } else if (payload?.type === 'fenbao') {
+                  try {
+                    await projectService.assignFenbao(pid, payload.id);
+                  } catch {}
+                }
               }}
             />
           )}

@@ -1,14 +1,16 @@
 from datetime import datetime,timezone
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from app.db.session import get_session
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectRead, ProjectAssignCreate, AssignmentRead
+from app.schemas.fenbaos import FenbaoTeamRead
 from app.db.models import Project, Employee
 from app.services.scheduler import schedule_assignment_notifications
 from app.dependencies import get_time_conflict_service
 from app.schemas.assignment import AssignmentUpdate
-from app.repositories.interfaces import IEmployeeAssignmentRepository, IProjectRepository
-from app.dependencies import get_assignment_repo, get_project_repo
+from app.repositories.interfaces import IEmployeeAssignmentRepository, IProjectRepository, IFenBaoTeamRepository
+from app.dependencies import get_assignment_repo, get_project_repo, get_fenbao_team_repo
 from app.errorhandler.bussinesserror import TimeConflictError
 from app.service_repo.time_conflict_service import TimeConflictService
 
@@ -19,6 +21,10 @@ router = APIRouter(tags=["projects"], prefix="/projects")
 @router.post("/", response_model=ProjectRead)
 async def create_project(payload: ProjectCreate, repo: IProjectRepository = Depends(get_project_repo)):
     return await repo.create(payload)
+
+@router.get('projects/{region_id}')
+async def get_projects_count_in_region(region_id: int, repo: IProjectRepository = Depends(get_project_repo)):
+    return await repo.count_in_region(region_id)
 
 
 @router.get("/", response_model=list[ProjectRead])
@@ -45,6 +51,7 @@ async def delete_project(project_id: int, repo: IProjectRepository = Depends(get
 @router.post("/{project_id}/assignments", response_model=AssignmentRead)
 async def assign_employee(
     project_id: int, payload: ProjectAssignCreate,
+    overwrite:bool = False,
     session: Session = Depends(get_session),
     tc: TimeConflictService = Depends(get_time_conflict_service),
     repo: IEmployeeAssignmentRepository = Depends(get_assignment_repo)
@@ -59,8 +66,10 @@ async def assign_employee(
         raise HTTPException(status_code=400, detail="end_time must be greater than start_time")
     
     conflicts = await tc.check_time_conflict(payload.employee_id, payload.start_time, payload.end_time)
-    if conflicts:
-        raise TimeConflictError(conflicts)
+    if conflicts and not overwrite:
+        raise TimeConflictError(jsonable_encoder(conflicts))
+    if conflicts and overwrite:
+        await tc.solve_time_conflict(payload.employee_id, payload.start_time, payload.end_time, conflicts)
 
     payload.project_id = project_id
     created = await repo.create(payload)
@@ -68,6 +77,7 @@ async def assign_employee(
         raise HTTPException(status_code=400, detail="end_time is required")
     schedule_assignment_notifications(created.id, created.end_time.isoformat())
     return created
+
 
 @router.put("/{project_id}/assignments/{assignment_id}",response_model=AssignmentRead)
 async def update_assignment(
@@ -97,6 +107,10 @@ async def list_members(project_id: int, repo: IEmployeeAssignmentRepository = De
             seen[a.employee_id] = True
             out.append({"employee_id": a.employee_id, "name": a.employee_name})
     return out
+
+@router.get("/{project_id}/fenbao_teams", response_model=list[FenbaoTeamRead])
+async def list_fenbao_teams(project_id: int, repo: IFenBaoTeamRepository = Depends(get_fenbao_team_repo)):
+    return await repo.read_by_project_id(project_id)
 
 @router.post("/{project_id}/fenbao")
 async def create_fenbao_assignment(

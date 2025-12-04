@@ -25,7 +25,7 @@ async def get_region(region_id: int, repo: IRegionRepository = Depends(get_regio
     row = await repo.get(region_id)
     return RegionRead(**row)
 
-@router.get("/{region_name}/employees", response_model=int)
+@router.get("/{region_name}/employees", response_model=dict)
 async def get_employee_counts(region_name: str, repo: IRegionRepository = Depends(get_region_repo)):
     return await repo.get_employee_counts(region_name)
 
